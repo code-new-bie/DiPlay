@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 简体中文（zh-rCN）字符串，与 values/strings_host.xml 一一对应。 -->
+<resources>
+    <!-- 连接面板 -->
+    <string name="host_stage_getting_ready">正在准备 CarPlay…</string>
+    <string name="host_hint_wireless">请让 iPhone 保持在附近，并打开蓝牙和 Wi-Fi。\n如果 iPhone 询问，请允许 CarPlay。</string>
+    <string name="host_hint_wired">请使用 USB 数据线连接并解锁 iPhone。\n如果 iPhone 询问，请信任本设备并允许 CarPlay。</string>
+    <string name="host_reset_wifi">重置 CarPlay Wi-Fi</string>
+    <string name="host_back_to_diplay">返回 DiPlay</string>
+    <string name="host_three_finger_hint">在 CarPlay 中，三指下滑即可打开 DiPlay 设置。</string>
+    <string name="host_vpn_denied">VPN 授权被拒绝</string>
+
+    <!-- 设置菜单：标题与分类 -->
+    <string name="host_settings_title">CarPlay 设置</string>
+    <string name="host_settings_connection">连接</string>
+    <string name="host_settings_location">位置</string>
+    <string name="host_settings_startup">启动</string>
+    <string name="host_settings_audio">音频</string>
+    <string name="host_settings_identity">身份与外观</string>
+    <string name="host_settings_display">显示与视频</string>
+    <string name="host_settings_window">窗口</string>
+    <string name="host_settings_diagnostics">诊断</string>
+    <string name="host_settings_android9">Android 9 兼容性</string>
+
+    <!-- 连接分区 -->
+    <string name="host_wireless_label">无线 CarPlay</string>
+    <string name="host_wireless_cd">无线 CarPlay 传输</string>
+    <string name="host_hotspot_status">热点状态</string>
+    <string name="host_wifi_session">Wi-Fi 会话</string>
+    <string name="host_mode_p2p">Wi-Fi P2P（5 GHz）</string>
+    <string name="host_mode_localonly">LocalOnlyHotspot</string>
+    <string name="host_mode_manual">手动热点</string>
+    <string name="host_hotspot_ssid">热点 SSID</string>
+    <string name="host_band">频段</string>
+    <string name="host_auto">自动</string>
+    <string name="host_band_24">2.4 GHz</string>
+    <string name="host_band_5">5 GHz</string>
+    <string name="host_channel_label">信道（0 = 自动）</string>
+    <string name="host_hotspot_password">热点密码</string>
+    <string name="host_security">加密</string>
+    <string name="host_sec_open">开放</string>
+    <string name="host_sec_wpa2">WPA2</string>
+    <string name="host_sec_wpa3t">WPA3 过渡</string>
+    <string name="host_sec_wpa3">WPA3</string>
+
+    <!-- 热点状态 -->
+    <string name="host_hotspot_prefix">"无线热点："</string>
+    <string name="host_hs_off">关闭</string>
+    <string name="host_hs_stopped">已停止</string>
+    <string name="host_hs_starting">正在启动</string>
+    <string name="host_hs_ready">已就绪</string>
+    <string name="host_hs_waiting_paired">等待已配对的 iPhone</string>
+    <string name="host_hs_bt">正在连接蓝牙</string>
+    <string name="host_hs_running">运行中</string>
+    <string name="host_hs_active">已激活</string>
+    <string name="host_hs_starting_airplay">正在启动 AirPlay 服务</string>
+    <string name="host_hs_error">错误</string>
+    <string name="host_hs_ssid">"\nSSID："</string>
+    <string name="host_hs_backend">"\n后端："</string>
+    <string name="host_hs_band">"\n频段："</string>
+    <string name="host_hs_channel">"\n信道："</string>
+
+    <!-- 启动分区 -->
+    <string name="host_auto_start_label">开机自动启动</string>
+    <string name="host_auto_start_desc">设备开机后自动启动 CarPlay</string>
+
+    <!-- 音频分区 -->
+    <string name="host_audio_focus_label">音频焦点</string>
+    <string name="host_audio_focus_desc">导航播报时自动压低媒体音量</string>
+    <string name="host_adv_audio_label">高级音频声道映射</string>
+    <string name="host_adv_audio_desc">按 CarPlay 音频类型分流 AAOS 音频总线</string>
+
+    <!-- 身份与外观分区 -->
+    <string name="host_manufacturer">厂商</string>
+    <string name="host_model">型号</string>
+    <string name="host_oem_label">OEM 标签</string>
+    <string name="host_airplay_icon">AirPlay 图标</string>
+    <string name="host_choose_image">选择图片</string>
+    <string name="host_default_icon">默认图标</string>
+    <string name="host_icon_custom">自定义 1:1 图标</string>
+    <string name="host_icon_default">默认占位图标</string>
+    <string name="host_driving_side">驾驶位</string>
+    <string name="host_drive_left">左舵</string>
+    <string name="host_drive_right">右舵</string>
+
+    <!-- 位置分区 -->
+    <string name="host_report_location">向 iPhone 上报位置</string>
+    <string name="host_report_location_cd">向 iPhone 上报 Android 位置</string>
+    <string name="host_report_location_desc">当 iPhone 请求时，将 Android 精确位置作为 CarPlay GPS 数据发送。</string>
+
+    <!-- 显示与视频分区 -->
+    <string name="host_resolution_label">分辨率</string>
+    <string name="host_frame_rate">帧率</string>
+    <string name="host_fps_value">%1$d fps</string>
+    <string name="host_phys_basis_label">物理尺寸基准</string>
+    <string name="host_phys_basis_width">最宽边</string>
+    <string name="host_phys_basis_height">最长边</string>
+    <string name="host_physical_length">物理长度</string>
+    <string name="host_mm_value">%1$d mm</string>
+    <string name="host_hevc_label">HEVC (H.265)</string>
+    <string name="host_hevc_cd">HEVC H.265 视频传输</string>
+    <string name="host_hevc_sw_label">HEVC 软件解码</string>
+    <string name="host_hevc_sw_cd">使用软件 HEVC 解码器</string>
+
+    <!-- 安全区 -->
+    <string name="host_safe_area">安全区</string>
+    <string name="host_sa_set">设置</string>
+    <string name="host_sa_reset">重置</string>
+    <string name="host_draw_outside">绘制到安全区外</string>
+    <string name="host_draw_outside_desc">允许 CarPlay 界面绘制到安全区之外</string>
+    <string name="host_sa_waiting">安全区：等待界面尺寸</string>
+    <string name="host_sa_full">安全区：全屏（%1$d × %2$d）</string>
+    <string name="host_sa_rect">"安全区：%1$d × %2$d，位于 (%3$d, %4$d)，屏幕 %5$d × %6$d"</string>
+
+    <!-- 全屏 / 窗口分区 -->
+    <string name="host_fullscreen">全屏</string>
+    <string name="host_hide_top">隐藏顶栏</string>
+    <string name="host_hide_top_desc">隐藏状态栏</string>
+    <string name="host_hide_bottom">隐藏底栏</string>
+    <string name="host_hide_bottom_desc">隐藏导航栏</string>
+
+    <!-- 诊断分区 -->
+    <string name="host_debug_logs_label">调试日志</string>
+    <string name="host_debug_logs_desc">在屏幕上显示调试日志</string>
+
+    <!-- Android 9 兼容性说明 -->
+    <string name="host_android9_note">以下设置在 Android 9（API 28）上不可用且已隐藏：\n• Wi-Fi P2P（5 GHz）— 改用 LocalOnlyHotspot。\n• HEVC 软件解码 — 改用硬件解码。</string>
+
+    <!-- 设置菜单按钮 -->
+    <string name="host_save_reconnect">保存并重新连接</string>
+    <string name="host_exit_app">退出应用</string>
+    <string name="host_close_cd">放弃更改并退出设置</string>
+    <string name="host_cancel">取消</string>
+    <string name="host_save">保存</string>
+
+    <!-- MFI 目标分区 -->
+    <string name="host_mfi_target_label">MFI 证书与签名目标</string>
+    <string name="host_mfi_usb">USB/CH341</string>
+    <string name="host_mfi_i2c">I2C</string>
+    <string name="host_mfi_remote">远程</string>
+    <string name="host_i2c_device">I2C 设备</string>
+    <string name="host_i2c_hint">Linux 设备路径，例如 /dev/i2c-1。</string>
+    <string name="host_server_address">服务器地址</string>
+    <string name="host_token_optional">令牌（可选）</string>
+    <string name="host_remote_hint">地址必须以 http:// 或 https:// 开头。令牌可选，将作为 Authorization Bearer 令牌发送。</string>
+
+    <!-- 校验错误（显示在设置菜单中） -->
+    <string name="host_err_i2c_required">请填写 I2C 设备路径</string>
+    <string name="host_err_server_required">请填写远程服务器地址</string>
+    <string name="host_err_server_prefix">远程服务器地址必须以 http:// 或 https:// 开头</string>
+    <string name="host_err_i2c_nul">I2C 设备路径包含 U+0000</string>
+    <string name="host_err_server_nul">远程服务器地址包含 U+0000</string>
+    <string name="host_err_token_nul">远程令牌包含 U+0000</string>
+    <string name="host_err_ssid_required">请填写热点 SSID</string>
+    <string name="host_err_ssid_too_long">热点 SSID 不能超过 32 个 UTF-8 字节</string>
+    <string name="host_err_ssid_nul">热点 SSID 包含 U+0000</string>
+    <string name="host_err_channel_range">信道必须为 0 或 1-196</string>
+    <string name="host_err_channel_band">信道与所选频段不匹配</string>
+    <string name="host_err_password_nul">热点密码包含 U+0000</string>
+    <string name="host_err_password_open">加密方式为开放时，密码必须留空</string>
+    <string name="host_err_password_length">WPA2/WPA3 密码长度须为 8-63 个字符</string>
+
+    <!-- 分辨率预览面板 -->
+    <string name="host_res_waiting">握手分辨率：等待显示</string>
+    <string name="host_res_line">握手分辨率：%1$d × %2$d → %3$d × %4$d</string>
+    <string name="host_transport_h264">H.264</string>
+    <string name="host_transport_hevc">HEVC（H.265，%1$s）</string>
+    <string name="host_dec_software">软件</string>
+    <string name="host_dec_hardware">硬件</string>
+    <string name="host_fs_top_hidden">顶部隐藏</string>
+    <string name="host_fs_top_shown">顶部显示</string>
+    <string name="host_fs_bottom_hidden">底部隐藏</string>
+    <string name="host_fs_bottom_shown">底部显示</string>
+    <string name="host_fs_summary">%1$s，%2$s</string>
+    <string name="host_prev_identity">"身份信息："</string>
+    <string name="host_prev_oem">"OEM 标签："</string>
+    <string name="host_prev_empty">（空）</string>
+    <string name="host_prev_fps">帧率：%1$d fps</string>
+    <string name="host_prev_max">检测到的最大分辨率：%1$d × %2$d px</string>
+    <string name="host_prev_phys">物理尺寸基准：%1$s = %2$d mm</string>
+    <string name="host_prev_basis_width">最宽边</string>
+    <string name="host_prev_basis_height">最长边</string>
+    <string name="host_prev_carplay_size">CarPlay 物理尺寸：%1$d × %2$d mm</string>
+    <string name="host_prev_drive">"驾驶位："</string>
+    <string name="host_drive_right_val">右舵</string>
+    <string name="host_drive_left_val">左舵</string>
+    <string name="host_prev_fullscreen">"全屏："</string>
+    <string name="host_prev_transport">"视频传输："</string>
+    <string name="host_prev_loc">"位置上报："</string>
+    <string name="host_prev_audio_focus">"音频焦点："</string>
+    <string name="host_prev_acm">"音频声道映射："</string>
+    <string name="host_acm_aaos">AAOS 音频总线</string>
+    <string name="host_acm_mobile">手机兼容模式</string>
+    <string name="host_enabled">已启用</string>
+    <string name="host_disabled">已停用</string>
+
+    <!-- 连接阶段提示（friendlyStage 返回值） -->
+    <string name="host_stage_wifi">请在车机设置中打开 Wi-Fi 以便连接。</string>
+    <string name="host_stage_location">请在车机的应用权限中允许 DiPlay 使用精确位置。</string>
+    <string name="host_stage_nearby">请在车机的应用权限中允许 DiPlay 使用附近设备。</string>
+    <string name="host_stage_creategroup">车机无法启动 CarPlay Wi-Fi。请检查 Wi-Fi 并关闭其他投影应用，正在重试…</string>
+    <string name="host_stage_reset">上一次 Wi-Fi Direct 连接仍在运行，请重置后再连接。</string>
+    <string name="host_stage_socket">找不到您的 iPhone，请解锁并检查蓝牙。</string>
+    <string name="host_stage_unsupported">本车机可能不支持无线 CarPlay，请尝试 USB 连接。</string>
+    <string name="host_stage_permission">请允许连接权限以继续</string>
+    <string name="host_stage_failed">连接已中断，正在重试…</string>
+    <string name="host_stage_usb">请用 USB 数据线连接 iPhone</string>
+    <string name="host_stage_paired">正在查找已配对的 iPhone…</string>
+    <string name="host_stage_bluetooth">正在连接您的 iPhone…</string>
+    <string name="host_stage_reconnect">正在重新连接您的 iPhone…</string>
+    <string name="host_stage_opening">正在打开 CarPlay…</string>
+
+    <!-- Toast -->
+    <string name="host_toast_canvas">本车机在此分辨率下无法使用更小的界面尺寸，已恢复默认大小。</string>
+<!-- Navigation audio channel -->
+    <string name="host_nav_channel_label">导航音频通道</string>
+    <string name="host_nav_channel_auto">自动（系统路由）</string>
+    <string name="host_nav_channel_manual">手动通道（0 = 自动，最大 40）</string>
+    <string name="host_nav_channel_hint">列表探测自本机音频输出（1-40）。更改在保存后下次连接生效。</string>
+    <string name="host_nav_channel_output">音频输出</string>
+    <string name="host_nav_channel_option">#%1$d · %2$s · %3$d 声道</string>
+    <string name="host_prev_nav_channel">导航通道：</string>
+    <string name="host_nav_channel_auto_val">自动</string>
+</resources>

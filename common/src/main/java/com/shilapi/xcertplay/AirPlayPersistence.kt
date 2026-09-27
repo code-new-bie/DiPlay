@@ -38,6 +38,9 @@ object AirPlayPersistence {
     private const val KEY_HEVC_ENABLED = "hevc_enabled"
     private const val KEY_HEVC_SOFTWARE_DECODER = "hevc_software_decoder"
     private const val KEY_ADVANCED_AUDIO_CHANNEL_MAPPING = "advanced_audio_channel_mapping"
+    private const val KEY_AUDIO_FOCUS_ENABLED = "audio_focus_enabled"
+    private const val KEY_MEDIA_AUDIO_CHANNEL = "media_audio_channel"
+    private const val KEY_NAVIGATION_AUDIO_CHANNEL = "navigation_audio_channel"
     private const val KEY_WIRELESS_ENABLED = "wireless_enabled"
     private const val KEY_WIRELESS_HOTSPOT_MODE = "wireless_hotspot_mode"
     private const val KEY_MANUAL_HOTSPOT_SSID = "manual_hotspot_ssid"
@@ -122,6 +125,44 @@ object AirPlayPersistence {
     fun saveAdvancedAudioChannelMapping(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putBoolean(KEY_ADVANCED_AUDIO_CHANNEL_MAPPING, enabled)
+            .apply()
+    }
+
+    /**
+     * Disabled by default: several head units mute streams that interact with their focus
+     * stack, so focus participation stays opt-in.
+     */
+    fun loadAudioFocusEnabled(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getBoolean(KEY_AUDIO_FOCUS_ENABLED, false)
+
+    fun saveAudioFocusEnabled(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putBoolean(KEY_AUDIO_FOCUS_ENABLED, enabled)
+            .apply()
+    }
+
+    /** 0 selects system routing; otherwise the AudioDeviceInfo id of the media output. */
+    fun loadMediaAudioChannel(context: Context): Int =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getInt(KEY_MEDIA_AUDIO_CHANNEL, 0)
+            .coerceIn(0, 40)
+
+    fun saveMediaAudioChannel(context: Context, channel: Int) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putInt(KEY_MEDIA_AUDIO_CHANNEL, channel.coerceIn(0, 40))
+            .apply()
+    }
+
+    /** 0 selects system routing; otherwise the AudioDeviceInfo id of the navigation output. */
+    fun loadNavigationAudioChannel(context: Context): Int =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getInt(KEY_NAVIGATION_AUDIO_CHANNEL, 0)
+            .coerceIn(0, 40)
+
+    fun saveNavigationAudioChannel(context: Context, channel: Int) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putInt(KEY_NAVIGATION_AUDIO_CHANNEL, channel.coerceIn(0, 40))
             .apply()
     }
 

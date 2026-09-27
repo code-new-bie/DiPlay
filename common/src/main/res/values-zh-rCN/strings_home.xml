@@ -1,0 +1,170 @@
+<resources>
+    <!-- Permission help -->
+    <string name="home_permission_nearby_devices_title">附近设备</string>
+    <string name="home_permission_nearby_devices_message">允许“附近设备”权限，DiPlay 才能连接已配对的 iPhone。</string>
+    <string name="home_permission_wireless_title">无线连接权限</string>
+    <string name="home_permission_wireless_message">重置 CarPlay Wi-Fi 前，请先允许“附近设备”权限；较旧版本的 Android 还需允许“位置信息”权限。</string>
+
+    <!-- Setup -->
+    <string name="home_setup_error">本地安装未能完成。请重新安装完整的 DiPlay 测试版 APK，然后再试。</string>
+
+    <!-- Content descriptions -->
+    <string name="home_cd_carplay">CarPlay</string>
+    <string name="home_cd_carplay_icon">CarPlay 图标</string>
+
+    <!-- Header -->
+    <string name="home_app_name">DiPlay</string>
+    <string name="home_btn_car_home">车机桌面</string>
+    <string name="home_btn_back">返回</string>
+
+    <!-- Home hero -->
+    <string name="home_hero_tagline">你的手机，你的驾驶。</string>
+    <string name="home_hero_title">熟悉的驾驶体验。</string>
+    <string name="home_hero_subtitle">你的地图、音乐和聊天。\nCarPlay，就在你的车机屏幕上。</string>
+
+    <!-- Home wireless card -->
+    <string name="home_wireless_card_title">无线 CarPlay</string>
+    <string name="home_status_ready_when_you_are">随时待命</string>
+    <string name="home_btn_connect_phone">连接手机</string>
+    <string name="home_wireless_hint">先将 iPhone 与车载蓝牙配对，再进行连接。\n请保持蓝牙和 Wi-Fi 开启。</string>
+    <string name="home_btn_choose_iphone">选择 iPhone</string>
+    <string name="home_btn_disconnect">断开连接</string>
+
+    <!-- Home right column -->
+    <string name="home_btn_connect_usb">通过 USB 连接</string>
+    <string name="home_usb_hint">将 iPhone 插入车载 USB 数据接口。\n收到询问时，请在 iPhone 上允许 CarPlay。</string>
+    <string name="home_btn_settings">设置</string>
+    <string name="home_settings_teaser">让 DiPlay 更贴合你的车。</string>
+    <string name="home_public_preview">"公开预览  ·  %1$s"</string>
+
+    <!-- Settings page -->
+    <string name="home_settings_title">你的驾驶，你做主。</string>
+    <string name="home_settings_intro">调整图标大小、分辨率或帧率后，应用时会重新连接 CarPlay。其他更改将在下次连接时生效。</string>
+
+    <string name="home_section_auto_connect">自动连接</string>
+    <string name="home_toggle_connect_on_open">打开 DiPlay 时自动连接</string>
+    <string name="home_toggle_connect_on_open_desc">沿用上次的连接方式和已选择的 iPhone。</string>
+    <string name="home_toggle_open_after_start">车辆启动后自动打开</string>
+    <string name="home_toggle_open_after_start_desc">是否可用取决于车机的启动设置。</string>
+    <string name="home_btn_choose_iphone_named">选择 iPhone · %1$s</string>
+
+    <string name="home_section_display_performance">显示与性能</string>
+    <string name="home_choice_resolution">分辨率</string>
+    <string name="home_res_native">原生</string>
+    <string name="home_res_80">80% · 负载更低</string>
+    <string name="home_res_60">60% · 负载最低</string>
+    <string name="home_choice_framerate">帧率</string>
+    <string name="home_fps_30">30 fps · 负载更低</string>
+    <string name="home_fps_60">60 fps · 画面更流畅</string>
+    <string name="home_toggle_efficient_video">高效视频</string>
+    <string name="home_toggle_efficient_video_desc">使用 HEVC 编码。如需最广的车机兼容性，请保持关闭。</string>
+    <string name="home_toggle_rhd">右舵</string>
+    <string name="home_toggle_rhd_desc">让 CarPlay 的操作按钮更靠近驾驶员一侧。</string>
+    <string name="home_toggle_fullscreen">全屏</string>
+    <string name="home_toggle_fullscreen_desc">CarPlay 打开时隐藏车机的系统栏。</string>
+
+    <string name="home_section_permissions">权限与连接帮助</string>
+    <string name="home_permissions_note">“附近设备”权限用于连接你的 iPhone，麦克风权限用于 Siri 和通话。较旧版本的 Android 进行无线设置时还需要“位置信息”权限。USB 模式可能会请求建立本地 VPN 连接。</string>
+    <string name="home_btn_app_permissions">应用权限</string>
+    <string name="home_btn_bluetooth_settings">蓝牙设置</string>
+    <string name="home_btn_wireless_help">无线连接帮助</string>
+
+    <string name="home_section_about_diagnostics">关于与诊断</string>
+    <string name="home_btn_about">关于 DiPlay</string>
+    <string name="home_btn_saving_report">正在保存报告…</string>
+    <string name="home_btn_save_report">保存诊断报告</string>
+    <string name="home_report_destination_downloads">"报告将保存到 Downloads/DiPlay。 "</string>
+    <string name="home_report_destination_pick">"请选择报告的保存位置。 "</string>
+    <string name="home_report_privacy">不会自动发送任何数据，报告中也不包含协议数据包和凭据。</string>
+
+    <!-- About page -->
+    <string name="home_about_tagline">CarPlay，在爱车里安家。</string>
+    <string name="home_about_section_title">公开预览 · %1$s</string>
+    <string name="home_about_body">一款面向 Android 车机的独立 CarPlay 接收器。有线与无线连接均在车机上完成，并采用本地认证。普通 iPhone 无需越狱、Mac、转接器或登录账号即可连接。\n\n本预览版使用实验性的配件身份，与各款 iPhone 和车机的兼容性仍在测试中。本产品并非 Apple 官方认证产品。</string>
+    <string name="home_section_open_source">得益于开源项目</string>
+    <string name="home_open_source_body">接收器基于 xcertplay，遵循 GPL-3.0 许可证。DiPlay 的界面沿用 DiAuto 的设计，遵循 AGPL-3.0 许可证。\n\n包含 AndroidX、Bouncy Castle、JmDNS 和 SLF4J，源代码和许可声明随本版本一同提供。\n\nCarPlay 及 CarPlay 图标归 Apple Inc. 所有。DiPlay 是一个独立项目。</string>
+
+    <!-- Icon and text size -->
+    <string name="home_btn_icon_size">图标与文字大小 · %1$s</string>
+    <string name="home_dialog_icon_size_title">CarPlay 图标与文字大小</string>
+    <string name="home_scale_75">更小 · 75%</string>
+    <string name="home_scale_85">小 · 85%</string>
+    <string name="home_scale_default">默认</string>
+    <string name="home_scale_115">大 · 115%</string>
+    <string name="home_icon_size_note">尺寸越小，占用的处理性能越多。如果播放卡顿，请选择“默认”。应用尺寸时会重新连接 CarPlay。</string>
+
+    <!-- Dialog buttons -->
+    <string name="home_btn_apply_reconnect">应用并重新连接</string>
+    <string name="home_btn_save">保存</string>
+    <string name="home_btn_cancel">取消</string>
+    <string name="home_btn_got_it">知道了</string>
+    <string name="home_btn_later">稍后</string>
+    <string name="home_btn_done">完成</string>
+    <string name="home_btn_close">关闭</string>
+    <string name="home_btn_app_settings">应用设置</string>
+
+    <!-- Bluetooth dialogs -->
+    <string name="home_dialog_turn_on_bluetooth_title">请打开蓝牙</string>
+    <string name="home_dialog_enable_bluetooth_message">请先开启车载蓝牙，并完成 iPhone 配对。</string>
+    <string name="home_btn_open_bluetooth">打开蓝牙设置</string>
+    <string name="home_dialog_pair_iphone_title">请先配对 iPhone</string>
+    <string name="home_dialog_pair_iphone_message">在 iPhone 上打开“设置”→“蓝牙”，与车辆配对。然后回到 DiPlay，选择“连接手机”。</string>
+    <string name="home_dialog_choose_iphone_title">选择你的 iPhone</string>
+    <string name="home_fallback_paired_device">已配对设备</string>
+    <string name="home_device_name_with_suffix">%1$s · %2$s</string>
+    <string name="home_fallback_iphone_name">iPhone</string>
+    <string name="home_btn_pair_another">配对其他设备</string>
+
+    <!-- Wireless help and reset -->
+    <string name="home_wireless_help_message">先将 iPhone 与车载蓝牙配对，保持 Wi-Fi 开启，并在 iPhone 上允许 CarPlay。请关闭其他手机投屏应用。\n\n如果之前的投屏应用仍占用连接，请点击下方“重置 CarPlay Wi-Fi”后重新连接。车辆正常上网的 Wi-Fi 不受影响。</string>
+    <string name="home_btn_reset_carplay_wifi">重置 CarPlay Wi-Fi</string>
+    <string name="home_dialog_reset_wifi_title">重置 CarPlay Wi-Fi？</string>
+    <string name="home_dialog_reset_wifi_message">此操作会断开现有的 Wi-Fi Direct 连接，包括重新安装后遗留的连接。请先关闭其他投屏应用。车辆上网使用的 Wi-Fi 不受影响。</string>
+    <string name="home_btn_reset_and_connect">重置并连接</string>
+    <string name="home_toast_no_wifi_direct">此车机不支持 Wi-Fi Direct。</string>
+    <string name="home_toast_wifi_direct_busy">Wi-Fi Direct 仍被占用，请关闭其他投屏应用后重试。</string>
+    <string name="home_toast_reset_failed">无法重置 Wi-Fi Direct，请关闭其他投屏应用后重试。</string>
+
+    <!-- Status -->
+    <string name="home_status_setup_attention">安装需要处理</string>
+    <string name="home_status_connected">CarPlay 已连接</string>
+    <string name="home_status_connecting">正在连接你的 iPhone…</string>
+    <string name="home_status_ready_for_phone">已为 %1$s 准备就绪</string>
+    <string name="home_btn_open_carplay">打开 CarPlay</string>
+
+    <!-- Report export -->
+    <string name="home_toast_save_location_failed">此车机无法打开保存位置，请重试保存到 Downloads 目录。</string>
+    <string name="home_toast_no_file_picker">此车机没有可用于保存报告的文件选择器。</string>
+    <string name="home_dialog_report_saved_title">诊断报告已保存</string>
+    <string name="home_dialog_report_saved_downloads">Downloads/DiPlay/%1$s</string>
+    <string name="home_dialog_report_saved_location">报告已保存到所选位置。</string>
+    <string name="home_dialog_report_failed_title">无法保存报告</string>
+    <string name="home_dialog_report_failed_message">请检查存储空间是否可用，或选择其他保存位置。</string>
+    <string name="home_btn_choose_location">选择位置</string>
+
+    <!-- Misc -->
+    <string name="home_toast_open_setting_hint">请在车机的“设置”应用中打开此项。</string>
+    <string name="home_choice_summary">%1$s · %2$s</string>
+<!-- Audio -->
+    <string name="home_section_audio">音频</string>
+    <string name="home_toggle_audio_focus">音频焦点</string>
+    <string name="home_toggle_audio_focus_desc">CarPlay 媒体向系统申请音频焦点；导航播报不会压低音乐。若开启后没有声音（部分车机焦点处理异常），请关闭本开关。更改在重新连接后生效。</string>
+    <string name="home_media_channel_label">媒体音频通道</string>
+    <string name="home_nav_channel_label">导航音频通道</string>
+    <string name="home_nav_channel_auto">自动（系统路由）</string>
+    <string name="home_nav_channel_value">#%1$d</string>
+    <string name="home_nav_channel_option">#%1$d · %2$s · %3$d 声道</string>
+    <string name="home_nav_channel_output">音频输出</string>
+    <string name="home_nav_channel_note">通道号 1-40 由车机音频策略定义（3 = 媒体，其余编号由车机厂商定义）。更改在重新连接后生效。</string>
+    <string name="home_ch_stream_system">系统</string>
+    <string name="home_ch_stream_ring">铃声</string>
+    <string name="home_ch_stream_music">媒体</string>
+    <string name="home_ch_stream_alarm">闹钟</string>
+    <string name="home_ch_stream_notification">通知</string>
+    <string name="home_ch_stream_sco">蓝牙通话</string>
+    <string name="home_ch_stream_dtmf">按键音</string>
+    <string name="home_ch_stream_tts">语音合成</string>
+    <string name="home_ch_stream_accessibility">无障碍</string>
+    <string name="home_nav_channel_manual_title">手动输入通道</string>
+    <string name="home_nav_channel_manual_hint">输入 0-40 的输出编号，0 表示自动路由。</string>
+</resources>

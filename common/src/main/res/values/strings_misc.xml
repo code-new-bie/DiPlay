@@ -1,0 +1,28 @@
+<resources>
+    <!-- MainActivity: I2C/MFi hardware diagnostic -->
+    <string name="misc_board_i2c_diagnostic">Board I2C diagnostic</string>
+    <string name="misc_linux_i2c_device">Linux I2C device</string>
+    <string name="misc_run_mfi_self_check">Run MFi self-check</string>
+    <string name="misc_ch341_vid_pid_note">CH341 requires deployment-specific VID/PID configuration.</string>
+    <string name="misc_status_idle">Idle</string>
+    <string name="misc_status_running">Running…</string>
+    <string name="misc_status_failed">Failed: %1$s</string>
+    <string name="misc_mfi_scan_interrupted">MFi scan interrupted</string>
+    <string name="misc_mfi_found_none">Found: none</string>
+    <string name="misc_mfi_found_chip">"Found: 0x%1$02X; device version: 0x%2$02X; protocol major (raw): %3$s"</string>
+
+    <!-- ImageCropActivity: icon crop -->
+    <string name="misc_loading_image">Loading image</string>
+    <string name="misc_cancel">Cancel</string>
+    <string name="misc_save_1_1">"Save 1:1"</string>
+    <string name="misc_could_not_decode_image">Could not decode image</string>
+    <string name="misc_drag_pinch_hint">Drag to move, pinch to zoom</string>
+    <string name="misc_image_not_ready">Image is not ready</string>
+    <string name="misc_could_not_encode_image">Could not encode image</string>
+    <string name="misc_could_not_save_image">Could not save image</string>
+
+    <!-- DiPlaySessionService: foreground notification -->
+    <string name="misc_channel_carplay_connection">CarPlay connection</string>
+    <string name="misc_notification_carplay_running">CarPlay connection running</string>
+    <string name="misc_btn_disconnect">Disconnect</string>
+</resources>

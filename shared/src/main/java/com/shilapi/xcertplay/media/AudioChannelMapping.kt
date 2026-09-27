@@ -25,8 +25,9 @@ internal data class AudioChannelSelection(
 /**
  * Maps CarPlay stream metadata to Android AudioAttributes values.
  *
- * AAOS routes AudioTrack instances by usage, so the automotive mode keeps generic media streams
- * on the media bus instead of reusing mobile's navigation fallback for default/compatibility.
+ * Media audio (music) and guidance audio (navigation prompts, alerts) map to separate Android
+ * usages in both modes, so the mixer can route and duck them independently. The automotive mode
+ * keeps the compatibility stream on the media bus for AAOS bus routing.
  */
 internal object AudioChannelMapper {
     const val STREAM_TYPE_MAIN_HIGH_AUDIO = 102
@@ -63,9 +64,9 @@ internal object AudioChannelMapper {
         "telephony" -> AudioChannelSelection(AudioChannel.PHONE, AudioContentType.SPEECH)
         "speechrecognition" ->
             AudioChannelSelection(AudioChannel.ASSISTANT, AudioContentType.SPEECH)
-        "media", "default", "compatibility" ->
+        "media", "compatibility" ->
             AudioChannelSelection(AudioChannel.MEDIA, AudioContentType.MUSIC)
-        "alert" -> AudioChannelSelection(AudioChannel.NAVIGATION, AudioContentType.SPEECH)
+        "default", "alert" -> AudioChannelSelection(AudioChannel.NAVIGATION, AudioContentType.SPEECH)
         else -> mainHighAudioOrNavigation(payloadType)
     }
 

@@ -30,7 +30,7 @@ Prior private builds have completed physical wired/wireless picture, touch and a
 - [Release notes](CHANGELOG.md)
 - [Credits and licenses](docs/THIRD_PARTY_NOTICES.md)
 
-The website is available in English, Arabic, Russian, Spanish and Simplified Chinese. The current app interface is English.
+The website is available in English, Arabic, Russian, Spanish and Simplified Chinese. The app interface follows the system language (English and Simplified Chinese).
 
 ## Source and credits
 

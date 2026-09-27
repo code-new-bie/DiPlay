@@ -1,0 +1,170 @@
+<resources>
+    <!-- Permission help -->
+    <string name="home_permission_nearby_devices_title">Nearby devices</string>
+    <string name="home_permission_nearby_devices_message">Allow Nearby devices so DiPlay can connect to your paired iPhone.</string>
+    <string name="home_permission_wireless_title">Wireless permissions</string>
+    <string name="home_permission_wireless_message">Allow Nearby devices and, on older Android versions, Location before resetting CarPlay Wi-Fi.</string>
+
+    <!-- Setup -->
+    <string name="home_setup_error">Local setup could not finish. Reinstall the complete DiPlay beta APK and try again.</string>
+
+    <!-- Content descriptions -->
+    <string name="home_cd_carplay">CarPlay</string>
+    <string name="home_cd_carplay_icon">CarPlay icon</string>
+
+    <!-- Header -->
+    <string name="home_app_name">DiPlay</string>
+    <string name="home_btn_car_home">Car home</string>
+    <string name="home_btn_back">Back</string>
+
+    <!-- Home hero -->
+    <string name="home_hero_tagline">YOUR PHONE. YOUR DRIVE.</string>
+    <string name="home_hero_title">A familiar drive.</string>
+    <string name="home_hero_subtitle">Your maps, music and conversations.\nCarPlay, right here on your car display.</string>
+
+    <!-- Home wireless card -->
+    <string name="home_wireless_card_title">WIRELESS CARPLAY</string>
+    <string name="home_status_ready_when_you_are">Ready when you are</string>
+    <string name="home_btn_connect_phone">Connect phone</string>
+    <string name="home_wireless_hint">Pair your iPhone with the car’s Bluetooth, then connect.\nKeep Bluetooth and Wi-Fi on.</string>
+    <string name="home_btn_choose_iphone">Choose iPhone</string>
+    <string name="home_btn_disconnect">Disconnect</string>
+
+    <!-- Home right column -->
+    <string name="home_btn_connect_usb">Connect with USB</string>
+    <string name="home_usb_hint">Plug your iPhone into a USB data port.\nAllow CarPlay when your iPhone asks.</string>
+    <string name="home_btn_settings">Settings</string>
+    <string name="home_settings_teaser">Make DiPlay feel right for your car.</string>
+    <string name="home_public_preview">"PUBLIC PREVIEW  ·  %1$s"</string>
+
+    <!-- Settings page -->
+    <string name="home_settings_title">Your drive, your way.</string>
+    <string name="home_settings_intro">Apply reconnects CarPlay for icon size, resolution and frame rate. Other changes apply to your next connection.</string>
+
+    <string name="home_section_auto_connect">Automatic connection</string>
+    <string name="home_toggle_connect_on_open">Connect when DiPlay opens</string>
+    <string name="home_toggle_connect_on_open_desc">Use your last connection type and selected iPhone.</string>
+    <string name="home_toggle_open_after_start">Open after the car starts</string>
+    <string name="home_toggle_open_after_start_desc">Availability depends on your head unit’s startup settings.</string>
+    <string name="home_btn_choose_iphone_named">Choose iPhone · %1$s</string>
+
+    <string name="home_section_display_performance">Display and performance</string>
+    <string name="home_choice_resolution">Resolution</string>
+    <string name="home_res_native">Native</string>
+    <string name="home_res_80">80% · lighter load</string>
+    <string name="home_res_60">60% · lightest load</string>
+    <string name="home_choice_framerate">Frame rate</string>
+    <string name="home_fps_30">30 fps · lighter load</string>
+    <string name="home_fps_60">60 fps · smoother motion</string>
+    <string name="home_toggle_efficient_video">Efficient video</string>
+    <string name="home_toggle_efficient_video_desc">Use HEVC. Leave off for the widest head-unit compatibility.</string>
+    <string name="home_toggle_rhd">Right-hand drive</string>
+    <string name="home_toggle_rhd_desc">Place CarPlay’s controls closer to the driver.</string>
+    <string name="home_toggle_fullscreen">Full screen</string>
+    <string name="home_toggle_fullscreen_desc">Hide the car’s system bars while CarPlay is open.</string>
+
+    <string name="home_section_permissions">Permissions and connection help</string>
+    <string name="home_permissions_note">Nearby devices connects your iPhone. Microphone enables Siri and calls. Older Android versions also require Location for wireless setup. USB mode may ask for a local VPN connection.</string>
+    <string name="home_btn_app_permissions">App permissions</string>
+    <string name="home_btn_bluetooth_settings">Bluetooth settings</string>
+    <string name="home_btn_wireless_help">Wireless connection help</string>
+
+    <string name="home_section_about_diagnostics">About and diagnostics</string>
+    <string name="home_btn_about">About DiPlay</string>
+    <string name="home_btn_saving_report">Saving report…</string>
+    <string name="home_btn_save_report">Save diagnostic report</string>
+    <string name="home_report_destination_downloads">"Reports save to Downloads/DiPlay. "</string>
+    <string name="home_report_destination_pick">"Choose where to save your report. "</string>
+    <string name="home_report_privacy">Nothing is sent automatically. Protocol payloads and credentials are excluded.</string>
+
+    <!-- About page -->
+    <string name="home_about_tagline">CarPlay, at home in your car.</string>
+    <string name="home_about_section_title">Public preview · %1$s</string>
+    <string name="home_about_body">An independent CarPlay receiver for Android head units. Wired and wireless connections run on the head unit, with local authentication. A standard iPhone can connect without a jailbreak, Mac, dongle or sign-in.\n\nThis preview uses an experimental accessory identity. Compatibility with every iPhone and head unit is still being tested. It is not an Apple-certified product.</string>
+    <string name="home_section_open_source">Made possible by open source</string>
+    <string name="home_open_source_body">Receiver based on xcertplay, licensed under GPL-3.0. DiPlay’s interface follows DiAuto’s design, licensed under AGPL-3.0.\n\nIncludes AndroidX, Bouncy Castle, JmDNS and SLF4J. Source and license notices accompany this release.\n\nCarPlay and the CarPlay icon belong to Apple Inc. DiPlay is an independent project.</string>
+
+    <!-- Icon and text size -->
+    <string name="home_btn_icon_size">Icon and text size · %1$s</string>
+    <string name="home_dialog_icon_size_title">CarPlay icon and text size</string>
+    <string name="home_scale_75">Smaller · 75%</string>
+    <string name="home_scale_85">Small · 85%</string>
+    <string name="home_scale_default">Default</string>
+    <string name="home_scale_115">Large · 115%</string>
+    <string name="home_icon_size_note">Smaller sizes use more processing power. Choose Default if playback slows. Applying a size reconnects CarPlay.</string>
+
+    <!-- Dialog buttons -->
+    <string name="home_btn_apply_reconnect">Apply and reconnect</string>
+    <string name="home_btn_save">Save</string>
+    <string name="home_btn_cancel">Cancel</string>
+    <string name="home_btn_got_it">Got it</string>
+    <string name="home_btn_later">Later</string>
+    <string name="home_btn_done">Done</string>
+    <string name="home_btn_close">Close</string>
+    <string name="home_btn_app_settings">App settings</string>
+
+    <!-- Bluetooth dialogs -->
+    <string name="home_dialog_turn_on_bluetooth_title">Turn on Bluetooth</string>
+    <string name="home_dialog_enable_bluetooth_message">Enable the car’s Bluetooth and pair your iPhone first.</string>
+    <string name="home_btn_open_bluetooth">Open Bluetooth</string>
+    <string name="home_dialog_pair_iphone_title">Pair your iPhone</string>
+    <string name="home_dialog_pair_iphone_message">On your iPhone, open Settings → Bluetooth and pair with the car. Then return to DiPlay and choose Connect phone.</string>
+    <string name="home_dialog_choose_iphone_title">Choose your iPhone</string>
+    <string name="home_fallback_paired_device">Paired device</string>
+    <string name="home_device_name_with_suffix">%1$s · %2$s</string>
+    <string name="home_fallback_iphone_name">iPhone</string>
+    <string name="home_btn_pair_another">Pair another</string>
+
+    <!-- Wireless help and reset -->
+    <string name="home_wireless_help_message">Pair your iPhone with the car’s Bluetooth, keep Wi-Fi on, and allow CarPlay on the iPhone. Close any other phone-projection app.\n\nIf a previous projection app left its connection running, reset CarPlay Wi-Fi below and connect again. Your car’s normal internet Wi-Fi stays on.</string>
+    <string name="home_btn_reset_carplay_wifi">Reset CarPlay Wi-Fi</string>
+    <string name="home_dialog_reset_wifi_title">Reset CarPlay Wi-Fi?</string>
+    <string name="home_dialog_reset_wifi_message">This ends the existing Wi-Fi Direct connection, including one left behind after reinstalling. Close other projection apps first. Your car’s internet Wi-Fi stays on.</string>
+    <string name="home_btn_reset_and_connect">Reset and connect</string>
+    <string name="home_toast_no_wifi_direct">This head unit does not support Wi-Fi Direct.</string>
+    <string name="home_toast_wifi_direct_busy">Wi-Fi Direct is still busy. Close the other projection app and try again.</string>
+    <string name="home_toast_reset_failed">Could not reset Wi-Fi Direct. Close the other projection app and try again.</string>
+
+    <!-- Status -->
+    <string name="home_status_setup_attention">Setup needs attention</string>
+    <string name="home_status_connected">CarPlay connected</string>
+    <string name="home_status_connecting">Connecting to your iPhone…</string>
+    <string name="home_status_ready_for_phone">Ready for %1$s</string>
+    <string name="home_btn_open_carplay">Open CarPlay</string>
+
+    <!-- Report export -->
+    <string name="home_toast_save_location_failed">This head unit could not open a save location. Please try saving to Downloads again.</string>
+    <string name="home_toast_no_file_picker">This head unit has no available file picker to save the report.</string>
+    <string name="home_dialog_report_saved_title">Diagnostic report saved</string>
+    <string name="home_dialog_report_saved_downloads">Downloads/DiPlay/%1$s</string>
+    <string name="home_dialog_report_saved_location">Your report was saved to the selected location.</string>
+    <string name="home_dialog_report_failed_title">Could not save the report</string>
+    <string name="home_dialog_report_failed_message">Check that storage is available, or choose another save location.</string>
+    <string name="home_btn_choose_location">Choose location</string>
+
+    <!-- Misc -->
+    <string name="home_toast_open_setting_hint">Open this setting from your car’s Settings app.</string>
+    <string name="home_choice_summary">%1$s · %2$s</string>
+<!-- Audio -->
+    <string name="home_section_audio">Audio</string>
+    <string name="home_toggle_audio_focus">Audio focus</string>
+    <string name="home_toggle_audio_focus_desc">CarPlay media claims audio focus. If sound disappears while enabled (some head units handle focus badly), turn it off. Changes apply on reconnect.</string>
+    <string name="home_media_channel_label">Media audio channel</string>
+    <string name="home_nav_channel_label">Navigation audio channel</string>
+    <string name="home_nav_channel_auto">Auto (system routing)</string>
+    <string name="home_nav_channel_value">#%1$d</string>
+    <string name="home_nav_channel_option">#%1$d · %2$s · %3$d ch</string>
+    <string name="home_nav_channel_output">audio output</string>
+    <string name="home_nav_channel_note">Channels 1-40 are defined by the head unit\'s audio policy (3 = media); vendors define the rest. Changes apply on reconnect.</string>
+    <string name="home_ch_stream_system">System</string>
+    <string name="home_ch_stream_ring">Ringtone</string>
+    <string name="home_ch_stream_music">Media</string>
+    <string name="home_ch_stream_alarm">Alarm</string>
+    <string name="home_ch_stream_notification">Notification</string>
+    <string name="home_ch_stream_sco">Bluetooth call</string>
+    <string name="home_ch_stream_dtmf">DTMF</string>
+    <string name="home_ch_stream_tts">Text-to-speech</string>
+    <string name="home_ch_stream_accessibility">Accessibility</string>
+    <string name="home_nav_channel_manual_title">Manual channel</string>
+    <string name="home_nav_channel_manual_hint">Enter an output id from 0 to 40. 0 = automatic routing.</string>
+</resources>

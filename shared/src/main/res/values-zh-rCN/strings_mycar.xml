@@ -1,0 +1,5 @@
+<resources>
+    <!-- MyCarAppScreen：CarApp 兜底模板 -->
+    <string name="mycar_title">xcertplay 硬件状态</string>
+    <string name="mycar_hardware_not_configured">硬件传输通道未配置。板载 I2C 需要 /dev/i2c-N 设备路径和系统/SELinux 权限；CH341 需要按部署配置 VID/PID。</string>
+</resources>

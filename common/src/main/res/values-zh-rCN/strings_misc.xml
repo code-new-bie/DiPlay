@@ -1,0 +1,28 @@
+<resources>
+    <!-- MainActivity：I2C/MFi 硬件诊断 -->
+    <string name="misc_board_i2c_diagnostic">板载 I2C 诊断</string>
+    <string name="misc_linux_i2c_device">Linux I2C 设备</string>
+    <string name="misc_run_mfi_self_check">运行 MFi 自检</string>
+    <string name="misc_ch341_vid_pid_note">CH341 需要根据具体部署配置 VID/PID。</string>
+    <string name="misc_status_idle">空闲</string>
+    <string name="misc_status_running">运行中…</string>
+    <string name="misc_status_failed">失败：%1$s</string>
+    <string name="misc_mfi_scan_interrupted">MFi 扫描已中断</string>
+    <string name="misc_mfi_found_none">已找到：无</string>
+    <string name="misc_mfi_found_chip">"已找到：0x%1$02X；设备版本：0x%2$02X；协议主版本（原始）：%3$s"</string>
+
+    <!-- ImageCropActivity：图标裁剪 -->
+    <string name="misc_loading_image">正在加载图片</string>
+    <string name="misc_cancel">取消</string>
+    <string name="misc_save_1_1">保存 1:1</string>
+    <string name="misc_could_not_decode_image">无法解码图片</string>
+    <string name="misc_drag_pinch_hint">拖动调整位置，双指缩放</string>
+    <string name="misc_image_not_ready">图片尚未就绪</string>
+    <string name="misc_could_not_encode_image">无法编码图片</string>
+    <string name="misc_could_not_save_image">无法保存图片</string>
+
+    <!-- DiPlaySessionService：前台服务通知 -->
+    <string name="misc_channel_carplay_connection">CarPlay 连接</string>
+    <string name="misc_notification_carplay_running">CarPlay 连接运行中</string>
+    <string name="misc_btn_disconnect">断开连接</string>
+</resources>
