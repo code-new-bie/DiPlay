@@ -39,7 +39,7 @@
 
     <!-- Settings page -->
     <string name="home_settings_title">Your drive, your way.</string>
-    <string name="home_settings_intro">Apply reconnects CarPlay for icon size, resolution and frame rate. Other changes apply to your next connection.</string>
+    <string name="home_settings_intro">Apply reconnects CarPlay for size, resolution, music buffer and frame rate. Other changes apply to your next connection.</string>
 
     <string name="home_section_auto_connect">Automatic connection</string>
     <string name="home_toggle_connect_on_open">Connect when DiPlay opens</string>
@@ -48,11 +48,37 @@
     <string name="home_toggle_open_after_start_desc">Availability depends on your head unit’s startup settings.</string>
     <string name="home_btn_choose_iphone_named">Choose iPhone · %1$s</string>
 
+    <string name="home_section_wireless_connection">Wireless connection</string>
+    <string name="home_wireless_link_title">Wireless link</string>
+    <string name="home_wireless_link_choice">Wireless link · %1$s</string>
+    <string name="home_wireless_link_direct">Wi-Fi Direct · default</string>
+    <string name="home_wireless_link_car_hotspot">Car hotspot</string>
+    <string name="home_wireless_direct_note">DiPlay creates its own Wi-Fi Direct network for the iPhone.</string>
+    <string name="home_hotspot_off_title">Car hotspot is off</string>
+    <string name="home_hotspot_off_warning">The car hotspot “%1$s” is off. Turn it on in the car settings before connecting.</string>
+    <string name="home_hotspot_off_message">DiPlay connects through the car hotspot “%1$s”. Turn it on in the car settings, then connect.</string>
+    <string name="home_btn_open_car_hotspot_settings">Open car hotspot settings</string>
+    <string name="home_hotspot_name">Car hotspot name</string>
+    <string name="home_hotspot_name_value">Hotspot name · %1$s</string>
+    <string name="home_hotspot_password">Car hotspot password</string>
+    <string name="home_hotspot_password_value">Hotspot password · %1$s</string>
+    <string name="home_hotspot_password_none">none</string>
+    <string name="home_hotspot_setup_note">Turn on the hotspot in the car settings first and enter the same name and password here. The iPhone joins this network for CarPlay. Changes apply to your next connection.</string>
+
     <string name="home_section_display_performance">Display and performance</string>
     <string name="home_choice_resolution">Resolution</string>
     <string name="home_res_native">Native</string>
     <string name="home_res_80">80% · lighter load</string>
     <string name="home_res_60">60% · lightest load</string>
+    <string name="home_choice_music_buffer">Music buffer</string>
+    <string name="home_buffer_300">300 ms · default</string>
+    <string name="home_buffer_500">500 ms</string>
+    <string name="home_buffer_1000">1000 ms · most stable</string>
+    <string name="home_carplay_size">CarPlay size</string>
+    <string name="home_carplay_size_large">Large</string>
+    <string name="home_carplay_size_medium">Medium</string>
+    <string name="home_carplay_size_small">Small</string>
+    <string name="home_carplay_size_note">Changes the size of CarPlay icons and text. Applying a size reconnects CarPlay.</string>
     <string name="home_choice_framerate">Frame rate</string>
     <string name="home_fps_30">30 fps · lighter load</string>
     <string name="home_fps_60">60 fps · smoother motion</string>
@@ -62,6 +88,9 @@
     <string name="home_toggle_rhd_desc">Place CarPlay’s controls closer to the driver.</string>
     <string name="home_toggle_fullscreen">Full screen</string>
     <string name="home_toggle_fullscreen_desc">Hide the car’s system bars while CarPlay is open.</string>
+    <string name="home_section_byd_navigation">BYD navigation</string>
+    <string name="home_toggle_byd_navigation">Navigation on HUD and instrument cluster</string>
+    <string name="home_toggle_byd_navigation_desc">Show phone navigation arrows, distance and street names on supported BYD displays. Vehicle compatibility varies.</string>
 
     <string name="home_section_permissions">Permissions and connection help</string>
     <string name="home_permissions_note">Nearby devices connects your iPhone. Microphone enables Siri and calls. Older Android versions also require Location for wireless setup. USB mode may ask for a local VPN connection.</string>

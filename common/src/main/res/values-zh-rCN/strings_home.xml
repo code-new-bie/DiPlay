@@ -39,7 +39,7 @@
 
     <!-- Settings page -->
     <string name="home_settings_title">你的驾驶，你做主。</string>
-    <string name="home_settings_intro">调整图标大小、分辨率或帧率后，应用时会重新连接 CarPlay。其他更改将在下次连接时生效。</string>
+    <string name="home_settings_intro">调整尺寸、分辨率、音乐缓冲或帧率后，应用时会重新连接 CarPlay。其他更改将在下次连接时生效。</string>
 
     <string name="home_section_auto_connect">自动连接</string>
     <string name="home_toggle_connect_on_open">打开 DiPlay 时自动连接</string>
@@ -48,11 +48,37 @@
     <string name="home_toggle_open_after_start_desc">是否可用取决于车机的启动设置。</string>
     <string name="home_btn_choose_iphone_named">选择 iPhone · %1$s</string>
 
+    <string name="home_section_wireless_connection">无线连接</string>
+    <string name="home_wireless_link_title">无线连接方式</string>
+    <string name="home_wireless_link_choice">无线连接方式 · %1$s</string>
+    <string name="home_wireless_link_direct">Wi-Fi Direct · 默认</string>
+    <string name="home_wireless_link_car_hotspot">车载热点</string>
+    <string name="home_wireless_direct_note">DiPlay 会为 iPhone 创建专用的 Wi-Fi Direct 网络。</string>
+    <string name="home_hotspot_off_title">车载热点已关闭</string>
+    <string name="home_hotspot_off_warning">车载热点“%1$s”已关闭。连接前请在车辆设置中将其打开。</string>
+    <string name="home_hotspot_off_message">DiPlay 通过车载热点“%1$s”连接。请先在车辆设置中打开热点，然后重新连接。</string>
+    <string name="home_btn_open_car_hotspot_settings">打开车载热点设置</string>
+    <string name="home_hotspot_name">车载热点名称</string>
+    <string name="home_hotspot_name_value">热点名称 · %1$s</string>
+    <string name="home_hotspot_password">车载热点密码</string>
+    <string name="home_hotspot_password_value">热点密码 · %1$s</string>
+    <string name="home_hotspot_password_none">无</string>
+    <string name="home_hotspot_setup_note">请先在车辆设置中打开热点，并在这里输入相同的名称和密码。iPhone 会加入该网络以使用 CarPlay。更改将在下次连接时生效。</string>
+
     <string name="home_section_display_performance">显示与性能</string>
     <string name="home_choice_resolution">分辨率</string>
     <string name="home_res_native">原生</string>
     <string name="home_res_80">80% · 负载更低</string>
     <string name="home_res_60">60% · 负载最低</string>
+    <string name="home_choice_music_buffer">音乐缓冲</string>
+    <string name="home_buffer_300">300 毫秒 · 默认</string>
+    <string name="home_buffer_500">500 毫秒</string>
+    <string name="home_buffer_1000">1000 毫秒 · 最稳定</string>
+    <string name="home_carplay_size">CarPlay 尺寸</string>
+    <string name="home_carplay_size_large">大</string>
+    <string name="home_carplay_size_medium">中</string>
+    <string name="home_carplay_size_small">小</string>
+    <string name="home_carplay_size_note">调整 CarPlay 图标与文字的大小。应用尺寸时会重新连接 CarPlay。</string>
     <string name="home_choice_framerate">帧率</string>
     <string name="home_fps_30">30 fps · 负载更低</string>
     <string name="home_fps_60">60 fps · 画面更流畅</string>
@@ -62,6 +88,9 @@
     <string name="home_toggle_rhd_desc">让 CarPlay 的操作按钮更靠近驾驶员一侧。</string>
     <string name="home_toggle_fullscreen">全屏</string>
     <string name="home_toggle_fullscreen_desc">CarPlay 打开时隐藏车机的系统栏。</string>
+    <string name="home_section_byd_navigation">比亚迪导航</string>
+    <string name="home_toggle_byd_navigation">在 HUD 和仪表盘显示导航</string>
+    <string name="home_toggle_byd_navigation_desc">在支持的比亚迪显示设备上显示手机导航箭头、距离和道路名称。实际兼容性取决于车型。</string>
 
     <string name="home_section_permissions">权限与连接帮助</string>
     <string name="home_permissions_note">“附近设备”权限用于连接你的 iPhone，麦克风权限用于 Siri 和通话。较旧版本的 Android 进行无线设置时还需要“位置信息”权限。USB 模式可能会请求建立本地 VPN 连接。</string>
