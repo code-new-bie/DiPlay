@@ -64,6 +64,10 @@
     <string name="home_hotspot_password_value">Hotspot password · %1$s</string>
     <string name="home_hotspot_password_none">none</string>
     <string name="home_hotspot_setup_note">Turn on the hotspot in the car settings first and enter the same name and password here. The iPhone joins this network for CarPlay. Changes apply to your next connection.</string>
+    <string name="home_hotspot_error_name_required">Enter the car hotspot name</string>
+    <string name="home_hotspot_error_name_too_long">The hotspot name must be at most 32 bytes</string>
+    <string name="home_hotspot_error_invalid_character">The name or password contains an invalid character</string>
+    <string name="home_hotspot_error_password_length">The hotspot password must be 8–63 characters</string>
 
     <string name="home_section_display_performance">Display and performance</string>
     <string name="home_choice_resolution">Resolution</string>

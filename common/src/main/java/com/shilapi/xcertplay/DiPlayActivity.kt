@@ -456,8 +456,14 @@ class DiPlayActivity : ComponentActivity() {
 
     private fun storedSsid() = AirPlayPersistence.loadManualHotspotSsid(this)
     private fun storedPassword() = AirPlayPersistence.loadManualHotspotPassphrase(this)
-    private fun hotspotError(ssid: String, password: String) =
-        com.shilapi.xcertplay.orchestration.ManualHotspotValidation.validate(ssid, password)
+    private fun hotspotError(ssid: String, password: String): String? =
+        when (com.shilapi.xcertplay.orchestration.ManualHotspotValidation.validate(ssid, password)) {
+            com.shilapi.xcertplay.orchestration.ManualHotspotValidationError.NAME_REQUIRED -> getString(R.string.home_hotspot_error_name_required)
+            com.shilapi.xcertplay.orchestration.ManualHotspotValidationError.NAME_TOO_LONG -> getString(R.string.home_hotspot_error_name_too_long)
+            com.shilapi.xcertplay.orchestration.ManualHotspotValidationError.INVALID_CHARACTER -> getString(R.string.home_hotspot_error_invalid_character)
+            com.shilapi.xcertplay.orchestration.ManualHotspotValidationError.PASSWORD_LENGTH -> getString(R.string.home_hotspot_error_password_length)
+            null -> null
+        }
 
     private fun saveHotspotCredentials(ssid: String, password: String) {
         AirPlayPersistence.saveManualHotspotSsid(this, ssid)

@@ -64,6 +64,10 @@
     <string name="home_hotspot_password_value">热点密码 · %1$s</string>
     <string name="home_hotspot_password_none">无</string>
     <string name="home_hotspot_setup_note">请先在车辆设置中打开热点，并在这里输入相同的名称和密码。iPhone 会加入该网络以使用 CarPlay。更改将在下次连接时生效。</string>
+    <string name="home_hotspot_error_name_required">请输入车载热点名称</string>
+    <string name="home_hotspot_error_name_too_long">热点名称不能超过 32 字节</string>
+    <string name="home_hotspot_error_invalid_character">热点名称或密码包含无效字符</string>
+    <string name="home_hotspot_error_password_length">热点密码须为 8 至 63 个字符</string>
 
     <string name="home_section_display_performance">显示与性能</string>
     <string name="home_choice_resolution">分辨率</string>
