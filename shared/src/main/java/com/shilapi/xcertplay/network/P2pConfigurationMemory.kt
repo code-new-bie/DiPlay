@@ -6,7 +6,7 @@ import java.util.UUID
 /** Only radio settings are stored: never network credentials, phone identifiers or addresses. */
 internal class P2pConfigurationMemory(context: Context) {
     private val prefs = context.getSharedPreferences("carplay_wifi_p2p_success", Context.MODE_PRIVATE)
-    data class Record(val encoded: String, val request: P2pCreationRequest, val stationMHz: Int?)
+    data class Record(val encoded: String, val request: P2pCreationRequest, val actualMHz: Int, val stationMHz: Int?)
 
     fun read(): Record? = runCatching {
         val encoded = prefs.getString("confirmed", null) ?: return null
@@ -18,9 +18,10 @@ internal class P2pConfigurationMemory(context: Context) {
             "frequency" -> P2pStartupRecovery.rememberedFrequency(requested) ?: return null
             else -> return null
         }
-        if (wifiFrequencyMhzToChannel(fields[2].toInt()) == null) return null
+        val actualMHz = fields[2].toInt()
+        if (wifiFrequencyMhzToChannel(actualMHz) == null) return null
         UUID.fromString(fields[4])
-        Record(encoded, request, fields[3].toInt().takeIf { it > 0 })
+        Record(encoded, request, actualMHz, fields[3].toInt().takeIf { it > 0 })
     }.getOrNull()
 
     fun remember(request: P2pCreationRequest, actualMHz: Int, stationMHz: Int?): Boolean {

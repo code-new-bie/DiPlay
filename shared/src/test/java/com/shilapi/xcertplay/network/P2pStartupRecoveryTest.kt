@@ -25,7 +25,7 @@ class P2pStartupRecoveryTest {
     }
 
     @Test fun unsafeRememberedFrequenciesDoNotBypassTheChannelPolicy() {
-        for (frequency in listOf(0, 2472, 2484, 5500, 5955)) {
+        for (frequency in listOf(0, 2477, 2484, 5510, 5955)) {
             assertEquals(P2pStartupRecovery.plan(null), P2pStartupRecovery.plan(null,
                 P2pCreationRequest(P2pCreationMode.FIXED_5_GHZ, frequency)))
         }

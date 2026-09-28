@@ -32,6 +32,7 @@ import com.shilapi.xcertplay.host.R
 import com.shilapi.xcertplay.mfi.LocalMfiAuthenticationClient
 import com.shilapi.xcertplay.orchestration.MfiTarget
 import com.shilapi.xcertplay.orchestration.WirelessHotspotMode
+import com.shilapi.xcertplay.network.WifiP2pChannelPreference
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -347,7 +348,36 @@ class DiPlayActivity : ComponentActivity() {
         parent.addView(control, matchButton(0, 60)); parent.addView(space(12))
         if (!carHotspot) {
             parent.addView(label(getString(R.string.home_wireless_direct_note), 14, MUTED).apply {
-                setPadding(0, 0, 0, dp(18))
+                setPadding(0, 0, 0, dp(10))
+            })
+            val frequencies = listOf<Int?>(null) + WifiP2pChannelPreference.availableFrequencies(this)
+            val names = frequencies.map { frequency ->
+                if (frequency == null) getString(R.string.home_direct_channel_auto)
+                else getString(R.string.home_direct_channel_item,
+                    if (frequency < 5000) (frequency - 2407) / 5 else (frequency - 5000) / 5,
+                    frequency)
+            }.toTypedArray()
+            val current = WifiP2pChannelPreference.load(this)
+            val currentName = names.getOrNull(frequencies.indexOf(current)) ?: getString(
+                R.string.home_direct_channel_unavailable, current)
+            val channel = button(getString(R.string.home_direct_channel_choice, currentName), false) {}
+            channel.setOnClickListener {
+                var selection = frequencies.indexOf(WifiP2pChannelPreference.load(this)).coerceAtLeast(0)
+                AlertDialog.Builder(this).setTitle(R.string.home_direct_channel_title)
+                    .setSingleChoiceItems(names, selection) { _, index -> selection = index }
+                    .setPositiveButton(if (CarPlayBackgroundSession.hasSession()) R.string.home_btn_apply_reconnect else R.string.home_btn_save) { _, _ ->
+                        val selected = frequencies[selection]
+                        if (selected != WifiP2pChannelPreference.load(this)) {
+                            WifiP2pChannelPreference.save(this, selected)
+                            render()
+                            if (CarPlayBackgroundSession.hasSession()) connect(true)
+                        }
+                    }
+                    .setNegativeButton(R.string.home_btn_cancel, null).show()
+            }
+            parent.addView(channel, matchButton(0, 60))
+            parent.addView(label(getString(R.string.home_direct_channel_note), 14, MUTED).apply {
+                setPadding(0, dp(8), 0, dp(18))
             })
             return
         }

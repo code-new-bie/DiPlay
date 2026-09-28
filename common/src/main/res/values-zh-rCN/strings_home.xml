@@ -77,6 +77,12 @@
     <string name="home_wireless_link_direct">Wi-Fi Direct · 默认</string>
     <string name="home_wireless_link_car_hotspot">车载热点</string>
     <string name="home_wireless_direct_note">DiPlay 会为 iPhone 创建专用的 Wi-Fi Direct 网络。</string>
+    <string name="home_direct_channel_title">Wi-Fi Direct 信道</string>
+    <string name="home_direct_channel_choice">Wi-Fi Direct 信道 · %1$s</string>
+    <string name="home_direct_channel_auto">自动</string>
+    <string name="home_direct_channel_item">信道 %1$d（%2$d MHz）</string>
+    <string name="home_direct_channel_unavailable">%1$d MHz（当前不可用）</string>
+    <string name="home_direct_channel_note">自动模式优先使用上次确认可用的信道。支持查询的 Android 14 及以上设备显示系统允许用于 Wi-Fi Direct 的信道；其他设备显示常用的非 DFS 候选信道。车机未连接 Wi-Fi 时先尝试选定信道，若被拒绝则尝试其他信道。</string>
     <string name="home_hotspot_off_title">车载热点已关闭</string>
     <string name="home_hotspot_off_warning">车载热点“%1$s”已关闭。连接前请在车辆设置中将其打开。</string>
     <string name="home_hotspot_off_message">DiPlay 通过车载热点“%1$s”连接。请先在车辆设置中打开热点，然后重新连接。</string>

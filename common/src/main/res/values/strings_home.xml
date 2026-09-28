@@ -77,6 +77,12 @@
     <string name="home_wireless_link_direct">Wi-Fi Direct · default</string>
     <string name="home_wireless_link_car_hotspot">Car hotspot</string>
     <string name="home_wireless_direct_note">DiPlay creates its own Wi-Fi Direct network for the iPhone.</string>
+    <string name="home_direct_channel_title">Wi-Fi Direct channel</string>
+    <string name="home_direct_channel_choice">Wi-Fi Direct channel · %1$s</string>
+    <string name="home_direct_channel_auto">Auto</string>
+    <string name="home_direct_channel_item">Channel %1$d (%2$d MHz)</string>
+    <string name="home_direct_channel_unavailable">%1$d MHz (currently unavailable)</string>
+    <string name="home_direct_channel_note">Auto uses the last confirmed channel. Where supported, Android 14+ lists channels allowed for Wi-Fi Direct; otherwise common non-DFS candidates are shown. A selected channel is tried first when the car is disconnected from Wi-Fi. If rejected, DiPlay tries other channels.</string>
     <string name="home_hotspot_off_title">Car hotspot is off</string>
     <string name="home_hotspot_off_warning">The car hotspot “%1$s” is off. Turn it on in the car settings before connecting.</string>
     <string name="home_hotspot_off_message">DiPlay connects through the car hotspot “%1$s”. Turn it on in the car settings, then connect.</string>

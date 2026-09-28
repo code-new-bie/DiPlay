@@ -10,6 +10,7 @@ import android.net.wifi.p2p.WifiP2pInfo
 import android.net.wifi.p2p.WifiP2pManager
 import com.shilapi.xcertplay.network.P2pResetRequiredException
 import com.shilapi.xcertplay.network.WifiP2pGroupManager
+import com.shilapi.xcertplay.network.WifiP2pChannelPreference
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -35,6 +36,7 @@ class WifiP2pGroupManagerTest {
     private val radio get() = shadowOf(context.getSystemService(WifiP2pManager::class.java)) as P2pRadio
 
     @Before fun setup() {
+        WifiP2pChannelPreference.save(context, null)
         shadowOf(context).grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
         val wifi = context.getSystemService(WifiManager::class.java)
         wifi.isWifiEnabled = true
@@ -66,8 +68,9 @@ class WifiP2pGroupManagerTest {
     }
 
     private val memory get() = context.getSharedPreferences("carplay_wifi_p2p_success", Context.MODE_PRIVATE)
-    private fun seedMemory(kind: String = "frequency", requested: Int = 2437, station: Int = 5180): String {
-        val encoded = "$kind|$requested|2437|$station|00000000-0000-0000-0000-000000000001"
+    private fun seedMemory(kind: String = "frequency", requested: Int = 2437,
+                           station: Int = 5180, actual: Int = 2437): String {
+        val encoded = "$kind|$requested|$actual|$station|00000000-0000-0000-0000-000000000001"
         memory.edit().putString("confirmed", encoded).commit()
         return encoded
     }
@@ -134,6 +137,62 @@ class WifiP2pGroupManagerTest {
         assertEquals(listOf(2412), radio.requests.map { it?.groupOwnerBand })
         assertEquals(previous, memory.getString("confirmed", null))
         assertTrue(logs.any { it.contains("skipped=station_channel_changed") })
+    }
+
+    @Test fun disconnectedStationReusesConfirmedFiveGhzChannel() {
+        seedMemory(requested = 5745, actual = 5745, station = 5745)
+        val info = context.getSystemService(WifiManager::class.java).connectionInfo
+        shadowOf(info).setSupplicantState(SupplicantState.DISCONNECTED)
+        val logs = mutableListOf<String>()
+        WifiP2pGroupManager(context, logs::add).use { manager -> background { manager.start(5000) } }
+        assertEquals(listOf(5745), radio.requests.map { it?.groupOwnerBand })
+        assertTrue(logs.any { it.contains("frequencyMHz=5745 reason=station_disconnected") })
+    }
+
+    @Test fun selectedChannelGoesBeforeRememberedChannelWhenStationDisconnected() {
+        seedMemory(requested = 5180, actual = 5180, station = 5180)
+        WifiP2pChannelPreference.save(context, 5745)
+        val info = context.getSystemService(WifiManager::class.java).connectionInfo
+        shadowOf(info).setSupplicantState(SupplicantState.DISCONNECTED)
+        val logs = mutableListOf<String>()
+        WifiP2pGroupManager(context, logs::add).use { manager -> background { manager.start(5000) } }
+        assertEquals(listOf(5745), radio.requests.map { it?.groupOwnerBand })
+        assertTrue(logs.any { it.contains("channel preference=5745 applied=true") })
+    }
+
+    @Test fun selectedChannelDefersToConnectedStationAlignment() {
+        WifiP2pChannelPreference.save(context, 5745)
+        WifiP2pGroupManager(context).use { manager -> background { manager.start(5000) } }
+        assertEquals(listOf(5180), radio.requests.map { it?.groupOwnerBand })
+    }
+
+    @Test fun channelPreferenceOffersCommonNonDfsChannelsOnOlderAndroid() {
+        WifiP2pChannelPreference.save(context, 5745)
+        assertEquals(5745, WifiP2pChannelPreference.load(context))
+        val available = WifiP2pChannelPreference.availableFrequencies(context)
+        assertTrue(available.containsAll(listOf(2412, 2437, 2462, 5180, 5200, 5745, 5825)))
+        assertFalse(5260 in available)
+        assertThrows(IllegalArgumentException::class.java) {
+            WifiP2pChannelPreference.save(context, 5190)
+        }
+        WifiP2pChannelPreference.save(context, null)
+        assertNull(WifiP2pChannelPreference.load(context))
+    }
+
+    @Test fun disconnectedStationDoesNotReuseOldTwoGhzChannel() {
+        seedMemory(requested = 2437, station = 5180)
+        val info = context.getSystemService(WifiManager::class.java).connectionInfo
+        shadowOf(info).setSupplicantState(SupplicantState.DISCONNECTED)
+        WifiP2pGroupManager(context).use { manager -> background { manager.start(5000) } }
+        assertEquals(listOf(5180), radio.requests.map { it?.groupOwnerBand })
+    }
+
+    @Test fun disconnectedStationDoesNotReuseFiveGhzRequestThatLandedOnTwoGhz() {
+        seedMemory(requested = 5745, actual = 2437, station = 5745)
+        val info = context.getSystemService(WifiManager::class.java).connectionInfo
+        shadowOf(info).setSupplicantState(SupplicantState.DISCONNECTED)
+        WifiP2pGroupManager(context).use { manager -> background { manager.start(5000) } }
+        assertEquals(listOf(5180), radio.requests.map { it?.groupOwnerBand })
     }
 
     @Test fun rememberedDefaultUsesSystemCreationInsteadOfInventingAFixedChannel() {
