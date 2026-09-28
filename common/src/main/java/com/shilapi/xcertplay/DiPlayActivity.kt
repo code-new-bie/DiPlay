@@ -530,6 +530,7 @@ class DiPlayActivity : ComponentActivity() {
             showChannelDialog(
                 title = getString(R.string.home_media_channel_label),
                 current = current,
+                navigation = false,
                 onApply = { value -> applyMediaChannel(value, current, control, summary) },
             )
         }
@@ -547,6 +548,7 @@ class DiPlayActivity : ComponentActivity() {
             showChannelDialog(
                 title = getString(R.string.home_nav_channel_label),
                 current = current,
+                navigation = true,
                 onApply = { value -> applyNavigationChannel(value, current, control, summary) },
             )
         }
@@ -557,36 +559,26 @@ class DiPlayActivity : ComponentActivity() {
     }
 
     /**
-     * Offers the whole 1-40 channel range (0 = automatic) without any probing. The numbers
-     * are head-unit-defined channels routed by the vehicle's audio policy; probing cannot
-     * see them, and a full list is the only way not to hide a channel the car really has.
+     * Offers all 0-40 channel numbers. Tapping an entry previews it through the same legacy
+     * stream route used for CarPlay; 0 uses the media or navigation usage-based route.
      */
-    private fun showChannelDialog(title: String, current: Int, onApply: (Int) -> Unit) {
-        val streamNames = mapOf(
-            1 to getString(R.string.home_ch_stream_system),
-            2 to getString(R.string.home_ch_stream_ring),
-            3 to getString(R.string.home_ch_stream_music),
-            4 to getString(R.string.home_ch_stream_alarm),
-            5 to getString(R.string.home_ch_stream_notification),
-            6 to getString(R.string.home_ch_stream_sco),
-            8 to getString(R.string.home_ch_stream_dtmf),
-            9 to getString(R.string.home_ch_stream_tts),
-            10 to getString(R.string.home_ch_stream_accessibility),
-        )
-        val labels = (0..40).map { id ->
-            when {
-                id == 0 -> getString(R.string.home_nav_channel_auto)
-                streamNames.containsKey(id) -> "$id · ${streamNames[id]}"
-                else -> id.toString()
-            }
+    private fun showChannelDialog(title: String, current: Int, navigation: Boolean, onApply: (Int) -> Unit) {
+        val preview = AudioChannelPreview { channel ->
+            toast(getString(R.string.home_channel_preview_unavailable, channel))
         }
+        val labels = (0..40).map(Int::toString).toTypedArray()
         var selection = current.coerceIn(0, 40)
         AlertDialog.Builder(this).setTitle(title)
-            .setSingleChoiceItems(labels.toTypedArray(), selection) { _, which -> selection = which }
+            .setSingleChoiceItems(labels, selection) { _, which ->
+                selection = which
+                preview.play(which, navigation)
+            }
             .setPositiveButton(if (CarPlayBackgroundSession.hasSession()) getString(R.string.home_btn_apply_reconnect) else getString(R.string.home_btn_save)) { _, _ ->
                 onApply(selection)
             }
-            .setNegativeButton(getString(R.string.home_btn_cancel), null).show()
+            .setNegativeButton(getString(R.string.home_btn_cancel), null)
+            .setOnDismissListener { preview.close() }
+            .show()
     }
 
     private fun applyMediaChannel(value: Int, previous: Int, control: Button, summary: (Int) -> String) {
@@ -603,9 +595,7 @@ class DiPlayActivity : ComponentActivity() {
         if (CarPlayBackgroundSession.hasSession()) connect(AirPlayPersistence.loadWirelessEnabled(this))
     }
 
-    private fun channelLabel(value: Int): String =
-        if (value == 0) getString(R.string.home_nav_channel_auto)
-        else getString(R.string.home_nav_channel_value, value)
+    private fun channelLabel(value: Int): String = value.toString()
 
     private fun storedSsid() = AirPlayPersistence.loadManualHotspotSsid(this)
     private fun storedPassword() = AirPlayPersistence.loadManualHotspotPassphrase(this)

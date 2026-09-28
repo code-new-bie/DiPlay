@@ -222,7 +222,8 @@
     <string name="home_nav_channel_value">#%1$d</string>
     <string name="home_nav_channel_option">#%1$d · %2$s · %3$d 声道</string>
     <string name="home_nav_channel_output">音频输出</string>
-    <string name="home_nav_channel_note">通道号 1-40 由车机音频策略定义（3 = 媒体，其余编号由车机厂商定义）。更改在重新连接后生效。</string>
+    <string name="home_nav_channel_note">0 表示自动路由。点选数字会试听对应输出；没有声音可能是通道不支持或音量被静音。更改在重新连接后生效。</string>
+    <string name="home_channel_preview_unavailable">此设备无法试听音频通道 %1$d。</string>
     <string name="home_ch_stream_system">系统</string>
     <string name="home_ch_stream_ring">铃声</string>
     <string name="home_ch_stream_music">媒体</string>

@@ -222,7 +222,8 @@
     <string name="home_nav_channel_value">#%1$d</string>
     <string name="home_nav_channel_option">#%1$d · %2$s · %3$d ch</string>
     <string name="home_nav_channel_output">audio output</string>
-    <string name="home_nav_channel_note">Channels 1-40 are defined by the head unit\'s audio policy (3 = media); vendors define the rest. Changes apply on reconnect.</string>
+    <string name="home_nav_channel_note">0 = automatic routing. Tap a number to preview that output; silence may mean the channel is unsupported or muted. Changes apply on reconnect.</string>
+    <string name="home_channel_preview_unavailable">Cannot preview audio channel %1$d on this device.</string>
     <string name="home_ch_stream_system">System</string>
     <string name="home_ch_stream_ring">Ringtone</string>
     <string name="home_ch_stream_music">Media</string>

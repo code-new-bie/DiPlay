@@ -145,7 +145,7 @@ object AirPlayPersistence {
             .apply()
     }
 
-    /** 0 selects system routing; otherwise the AudioDeviceInfo id of the media output. */
+    /** 0 selects usage-based routing; 1-40 selects a head-unit-defined legacy stream. */
     fun loadMediaAudioChannel(context: Context): Int =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getInt(KEY_MEDIA_AUDIO_CHANNEL, 0)
@@ -157,7 +157,7 @@ object AirPlayPersistence {
             .apply()
     }
 
-    /** 0 selects system routing; otherwise the AudioDeviceInfo id of the navigation output. */
+    /** 0 selects usage-based routing; 1-40 selects a head-unit-defined legacy stream. */
     fun loadNavigationAudioChannel(context: Context): Int =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getInt(KEY_NAVIGATION_AUDIO_CHANNEL, 0)
