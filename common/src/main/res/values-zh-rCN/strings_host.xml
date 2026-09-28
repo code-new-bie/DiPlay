@@ -71,6 +71,7 @@
     <string name="host_adv_audio_desc">按 CarPlay 音频类型分流 AAOS 音频总线</string>
 
     <!-- 身份与外观分区 -->
+    <string name="host_carplay_name">CarPlay 车载名称</string>
     <string name="host_manufacturer">厂商</string>
     <string name="host_model">型号</string>
     <string name="host_oem_label">OEM 标签</string>
@@ -172,6 +173,7 @@
     <string name="host_fs_bottom_hidden">底部隐藏</string>
     <string name="host_fs_bottom_shown">底部显示</string>
     <string name="host_fs_summary">%1$s，%2$s</string>
+    <string name="host_prev_carplay_name">"CarPlay 名称："</string>
     <string name="host_prev_identity">"身份信息："</string>
     <string name="host_prev_oem">"OEM 标签："</string>
     <string name="host_prev_empty">（空）</string>

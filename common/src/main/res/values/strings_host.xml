@@ -71,6 +71,7 @@
     <string name="host_adv_audio_desc">Route AAOS audio buses by CarPlay audio type</string>
 
     <!-- Identity & appearance section -->
+    <string name="host_carplay_name">CarPlay vehicle name</string>
     <string name="host_manufacturer">Manufacturer</string>
     <string name="host_model">Model</string>
     <string name="host_oem_label">OEM label</string>
@@ -172,6 +173,7 @@
     <string name="host_fs_bottom_hidden">bottom hidden</string>
     <string name="host_fs_bottom_shown">bottom shown</string>
     <string name="host_fs_summary">%1$s, %2$s</string>
+    <string name="host_prev_carplay_name">"CarPlay name: "</string>
     <string name="host_prev_identity">"Identity: "</string>
     <string name="host_prev_oem">"OEM label: "</string>
     <string name="host_prev_empty">(empty)</string>

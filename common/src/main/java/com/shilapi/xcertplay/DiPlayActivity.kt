@@ -209,6 +209,9 @@ class DiPlayActivity : ComponentActivity() {
         }
         section(content, getString(R.string.home_section_wireless_connection)) { card -> wirelessLinkControls(card) }
         section(content, getString(R.string.home_section_mfi)) { card -> mfiControls(card) }
+        section(content, getString(R.string.home_section_carplay_identity)) { card ->
+            carPlayNameControl(card)
+        }
         section(content, getString(R.string.home_section_display_performance)) { card ->
             iconSizeControl(card)
             carPlaySizeControl(card)
@@ -652,6 +655,56 @@ class DiPlayActivity : ComponentActivity() {
         AlertDialog.Builder(this).setTitle(title).setView(input)
             .setPositiveButton(getString(R.string.home_btn_save)) { _, _ -> save(input.text.toString().let { if (secret) it else it.trim() }) }
             .setNegativeButton(getString(R.string.home_btn_cancel), null).show()
+    }
+
+    private fun carPlayNameControl(parent: LinearLayout) {
+        val control = button(
+            getString(R.string.home_carplay_name_value, AirPlayPersistence.loadCarPlayName(this)),
+            false,
+        ) {}
+        control.setOnClickListener {
+            val input = EditText(this).apply {
+                setText(AirPlayPersistence.loadCarPlayName(this@DiPlayActivity))
+                setSingleLine()
+                inputType = android.text.InputType.TYPE_CLASS_TEXT
+                selectAll()
+            }
+            val dialog = AlertDialog.Builder(this)
+                .setTitle(getString(R.string.home_carplay_name))
+                .setView(input)
+                .setPositiveButton(
+                    if (CarPlayBackgroundSession.hasSession()) {
+                        getString(R.string.home_btn_apply_reconnect)
+                    } else {
+                        getString(R.string.home_btn_save)
+                    },
+                    null,
+                )
+                .setNegativeButton(getString(R.string.home_btn_cancel), null)
+                .create()
+            dialog.setOnShowListener {
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener onSaveClick@{
+                    val name = input.text.toString().replace('\u0000', ' ').trim()
+                        .ifBlank { AirPlayPersistence.DEFAULT_CARPLAY_NAME }
+                    if (name.toByteArray(Charsets.UTF_8).size > 63) {
+                        input.error = getString(R.string.home_carplay_name_too_long)
+                        return@onSaveClick
+                    }
+                    val previous = AirPlayPersistence.loadCarPlayName(this)
+                    AirPlayPersistence.saveCarPlayName(this, name)
+                    control.text = getString(R.string.home_carplay_name_value, name)
+                    dialog.dismiss()
+                    if (name != previous && CarPlayBackgroundSession.hasSession()) {
+                        connect(AirPlayPersistence.loadWirelessEnabled(this))
+                    }
+                }
+            }
+            dialog.show()
+        }
+        parent.addView(control, matchButton(0, 60))
+        parent.addView(label(getString(R.string.home_carplay_name_note), 14, MUTED).apply {
+            setPadding(0, dp(8), 0, 0)
+        })
     }
 
     private fun carPlaySizeControl(parent: LinearLayout) {
