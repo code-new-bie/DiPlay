@@ -211,8 +211,6 @@
     <string name="home_section_audio">Audio</string>
     <string name="home_toggle_audio_focus">Audio focus</string>
     <string name="home_toggle_audio_focus_desc">CarPlay media claims audio focus. If sound disappears while enabled (some head units handle focus badly), turn it off. Changes apply on reconnect.</string>
-    <string name="home_toggle_mute_local_media">Mute DiPlay media playback</string>
-    <string name="home_toggle_mute_local_media_desc">Keep CarPlay navigation, calls and Siri audible in DiPlay. Select Bluetooth output for music on your iPhone separately. Reconnects CarPlay when changed.</string>
     <string name="home_media_channel_label">Media audio channel</string>
     <string name="home_nav_channel_label">Navigation audio channel</string>
     <string name="home_nav_channel_auto">Auto (system routing)</string>

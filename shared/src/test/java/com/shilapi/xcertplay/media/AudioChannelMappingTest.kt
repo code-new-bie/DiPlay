@@ -1,25 +1,9 @@
 package com.shilapi.xcertplay.media
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AudioChannelMappingTest {
-    @Test
-    fun mutingLocalMediaKeepsGuidanceCallsAndSiri() {
-        val mode = AudioChannelMappingMode.AUTOMOTIVE_BUS
-        assertFalse(AudioChannelMapper.shouldPlayLocally("media", 100, mode, true))
-        assertFalse(AudioChannelMapper.shouldPlayLocally("compatibility", 100, mode, true))
-        assertFalse(AudioChannelMapper.shouldPlayLocally("unknown", 102, mode, true))
-        for (audioType in listOf("default", "alert", "telephony", "speechRecognition")) {
-            assertTrue(AudioChannelMapper.shouldPlayLocally(audioType, 100, mode, true))
-        }
-        assertTrue(AudioChannelMapper.shouldPlayLocally(
-            "compatibility", 100, AudioChannelMappingMode.MOBILE_COMPATIBLE, true))
-        assertTrue(AudioChannelMapper.shouldPlayLocally("media", 100, mode, false))
-    }
-
     @Test
     fun mobileCompatibleMappingMatchesTheOriginalRouting() {
         assertMapped(

@@ -45,7 +45,6 @@ class AndroidMediaSink(
     private val preferSoftwareHevcDecoder: Boolean = false,
     private val advancedAudioChannelMapping: Boolean = false,
     private val audioFocusEnabled: Boolean = false,
-    private val muteLocalMediaPlayback: Boolean = false,
     private val mediaChannel: Int = 0,
     private val navigationChannel: Int = 0,
     context: Context? = null,
@@ -132,15 +131,10 @@ class AndroidMediaSink(
     }
 
     override fun onAudioStarted(id: AudioStreamId, format: AudioFormat, firstSample: Int) {
-        if (!shouldPlayLocally(format)) {
-            onAudioDiagnostic("Audio: local media playback muted audioType=${format.audioType} type=${format.payloadType}")
-            return
-        }
         audioRenderer(id, format).start()
     }
 
     override fun onAudioRtp(id: AudioStreamId, format: AudioFormat, rtp: ByteArray, sample: Int) {
-        if (!shouldPlayLocally(format)) return
         audioRenderer(id, format).submit(rtp, sample)
     }
 
@@ -185,14 +179,6 @@ class AndroidMediaSink(
                 report = { videoDiagnosticHandlers[type]?.invoke(it) },
             )
         }
-
-    private fun shouldPlayLocally(format: AudioFormat): Boolean = AudioChannelMapper.shouldPlayLocally(
-        format.audioType,
-        format.payloadType,
-        if (advancedAudioChannelMapping) AudioChannelMappingMode.AUTOMOTIVE_BUS
-        else AudioChannelMappingMode.MOBILE_COMPATIBLE,
-        muteLocalMediaPlayback,
-    )
 
     @Synchronized
     private fun audioRenderer(id: AudioStreamId, format: AudioFormat): AudioRenderer {
