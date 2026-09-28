@@ -1,8 +1,10 @@
 # DiPlay
 
+**Languages:** English · [简体中文](README.zh-CN.md)
+
 **CarPlay for compatible Android head units.** Wired and wireless, with the familiar DiAuto interface. Independent app: `com.shihab.diplay`.
 
-[Download & website](https://shihabal3amri.github.io/DiPlay/) · [Release](https://github.com/shihabal3amri/DiPlay/releases/tag/v0.2.0) · [Report a problem](https://github.com/shihabal3amri/DiPlay/issues/new/choose)
+[Download & website](https://code-new-bie.github.io/DiPlay/) · [Release](https://github.com/code-new-bie/DiPlay/releases/tag/v0.2.0) · [Report a problem](https://github.com/code-new-bie/DiPlay/issues/new/choose)
 
 ![DiPlay home](site/assets/home.png)
 

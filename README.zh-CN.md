@@ -1,8 +1,10 @@
 # DiPlay
 
+**语言：** [English](README.md) · 简体中文
+
 为兼容安卓车机提供有线及无线 CarPlay，采用 DiAuto 风格界面。
 
-[下载与中文网站](https://shihabal3amri.github.io/DiPlay/zh-Hans/) · [0.2.0 发布页](https://github.com/shihabal3amri/DiPlay/releases/tag/v0.2.0) · [完整说明](README.md) · [报告问题](https://github.com/shihabal3amri/DiPlay/issues/new/choose)
+[下载与中文网站](https://code-new-bie.github.io/DiPlay/zh-Hans/) · [0.2.0 发布页](https://github.com/code-new-bie/DiPlay/releases/tag/v0.2.0) · [完整说明](README.md) · [报告问题](https://github.com/code-new-bie/DiPlay/issues/new/choose)
 
 ## 0.2.0 公开预览版
 

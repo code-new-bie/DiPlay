@@ -6,8 +6,8 @@ from html import escape as e
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / 'site'
 data = json.loads((SITE / 'content.json').read_text())
-BASE = 'https://shihabal3amri.github.io/DiPlay/'
-REPO = 'https://github.com/shihabal3amri/DiPlay'
+BASE = 'https://code-new-bie.github.io/DiPlay/'
+REPO = 'https://github.com/code-new-bie/DiPlay'
 RELEASE = REPO + '/releases/tag/v0.2.0'
 DOWNLOAD = REPO + '/releases/download/v0.2.0/DiPlay-0.2.0.apk'
 for lang, d in data.items():
