@@ -5,6 +5,18 @@ import org.junit.Test
 import java.nio.file.Files
 
 class DiagnosticRedactorTest {
+    @Test fun activeLogFlushMakesQueuedLinesAvailableForExport() {
+        val folder = Files.createTempDirectory("diplay-log-flush").toFile()
+        try {
+            SessionLogFile(folder.resolve("diplay.log")).use { log ->
+                log.reset("started")
+                log.append("Wi-Fi P2P ready")
+                SessionLogFile.flushActive()
+                assertTrue(folder.resolve("diplay.log").readText().contains("Wi-Fi P2P ready"))
+            }
+        } finally { folder.deleteRecursively() }
+    }
+
     @Test fun savedDriveReportKeepsMediaPerformanceCounters() {
         val folder = Files.createTempDirectory("diplay-media-report").toFile()
         try {

@@ -793,12 +793,13 @@ class DiPlayActivity : ComponentActivity() {
         val fileName = reportFileName()
         Thread({
             val result = runCatching {
+                SessionLogFile.flushActive()
                 val report = buildString {
                     appendLine("DiPlay ${version()} · private beta diagnostic report")
                     appendLine("Android ${Build.VERSION.RELEASE} / API ${Build.VERSION.SDK_INT}")
                     appendLine("Head unit: ${Build.MANUFACTURER} ${Build.MODEL}")
                     appendLine("Connection: ${if (AirPlayPersistence.loadWirelessEnabled(appContext)) "wireless" else "USB"}")
-                    appendLine("Authentication: local experimental beta identity; no remote fallback")
+                    appendLine("Authentication target: ${AirPlayPersistence.loadMfiTarget(appContext)}")
                     appendLine("Saved video preference (may differ from active session): ${if (AirPlayPersistence.loadHevcEnabled(appContext)) "HEVC" else "H.264"}; ${AirPlayPersistence.loadFps(appContext)} fps")
                     appendLine("CarPlay size: ${com.shilapi.xcertplay.airplay.CarPlaySize.fromWidthMillimeters(AirPlayPersistence.loadWidthPhysicalMm(appContext)).label}")
                     appendLine("Saved resolution preference (may differ from active session): ${AirPlayPersistence.loadDisplayScaleTenths(appContext) * 10}%")

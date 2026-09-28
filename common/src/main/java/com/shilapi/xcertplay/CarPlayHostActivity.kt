@@ -325,6 +325,7 @@ class CarPlayHostActivity : ComponentActivity() {
     private var restartGeneration = 0
     private var reconnectScheduled = false
     private var sessionLog: SessionLogFile? = null
+    private val diagnosticMessageReducer = DiagnosticMessageReducer()
     private var gestureSequenceActive = false
     private var gestureTracking = false
     private var gestureStartX = 0f
@@ -3036,17 +3037,18 @@ class CarPlayHostActivity : ComponentActivity() {
             }
 
             override fun onDebugLog(message: String) {
-                if (DiagnosticRedactor.redact(message) == null) return
+                val reduced = diagnosticMessageReducer.reduce(message) ?: return
+                if (DiagnosticRedactor.redact(reduced) == null) return
                 runOnUiThread {
                     if (controllerGeneration != restartGeneration) {
                         return@runOnUiThread
                     }
-                    DisplayDiagnosticSnapshot.record(this@CarPlayHostActivity, displayDiagnosticAttempt, message)
+                    DisplayDiagnosticSnapshot.record(this@CarPlayHostActivity, displayDiagnosticAttempt, reduced)
                     if (menuOpen) return@runOnUiThread
-                    if (message.startsWith(PROTOCOL_TRACE_PREFIX)) {
-                        appendFileLog(message)
+                    if (reduced.startsWith(PROTOCOL_TRACE_PREFIX)) {
+                        appendFileLog(reduced)
                     } else {
-                        appendLog(message)
+                        appendLog(reduced)
                     }
                 }
             }
