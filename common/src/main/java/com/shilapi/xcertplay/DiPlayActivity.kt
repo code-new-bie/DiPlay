@@ -29,6 +29,8 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.shilapi.xcertplay.host.R
+import com.shilapi.xcertplay.mfi.LocalMfiAuthenticationClient
+import com.shilapi.xcertplay.orchestration.MfiTarget
 import com.shilapi.xcertplay.orchestration.WirelessHotspotMode
 import java.io.File
 import java.text.SimpleDateFormat
@@ -205,6 +207,7 @@ class DiPlayActivity : ComponentActivity() {
             card.addView(button(getString(R.string.home_btn_choose_iphone_named, DiPlayPreferences.phoneName(this)), false) { choosePhone() }, matchButton(12, 60))
         }
         section(content, getString(R.string.home_section_wireless_connection)) { card -> wirelessLinkControls(card) }
+        section(content, getString(R.string.home_section_mfi)) { card -> mfiControls(card) }
         section(content, getString(R.string.home_section_display_performance)) { card ->
             iconSizeControl(card)
             carPlaySizeControl(card)
@@ -370,6 +373,123 @@ class DiPlayActivity : ComponentActivity() {
         })
     }
 
+    private fun mfiControls(parent: LinearLayout) {
+        val targets = MfiTarget.entries
+        val names = targets.map(::mfiTargetName)
+        val current = AirPlayPersistence.loadMfiTarget(this)
+        val control = button(
+            getString(R.string.home_choice_summary, getString(R.string.home_mfi_method), mfiTargetName(current)),
+            false,
+        ) {}
+        control.setOnClickListener {
+            var selection = targets.indexOf(current)
+            AlertDialog.Builder(this).setTitle(R.string.home_mfi_method)
+                .setSingleChoiceItems(names.toTypedArray(), selection) { _, index -> selection = index }
+                .setPositiveButton(
+                    if (CarPlayBackgroundSession.hasSession()) R.string.home_btn_apply_reconnect
+                    else R.string.home_btn_save,
+                ) { _, _ ->
+                    val selected = targets[selection]
+                    if (selected == MfiTarget.LOCAL && !localMfiDirectory().isDirectory) {
+                        toast(getString(R.string.home_mfi_local_unavailable))
+                        return@setPositiveButton
+                    }
+                    if (selected == current) return@setPositiveButton
+                    if (selected == MfiTarget.REMOTE && AirPlayPersistence.loadRemoteMfiServer(this).isBlank()) {
+                        textInput(getString(R.string.home_mfi_server_address), "", secret = false) { value ->
+                            if (!validMfiServer(value)) {
+                                toast(getString(R.string.home_mfi_invalid_server))
+                            } else {
+                                AirPlayPersistence.saveRemoteMfiServer(this, value)
+                                applyMfiTarget(selected)
+                            }
+                        }
+                    } else {
+                        applyMfiTarget(selected)
+                    }
+                }
+                .setNegativeButton(R.string.home_btn_cancel, null).show()
+        }
+        parent.addView(control, matchButton(0, 60))
+        val note = when (current) {
+            MfiTarget.LOCAL -> R.string.home_mfi_local_note
+            MfiTarget.USB_CH341 -> R.string.home_mfi_usb_note
+            MfiTarget.I2C -> R.string.home_mfi_i2c_note
+            MfiTarget.REMOTE -> R.string.home_mfi_remote_note
+        }
+        parent.addView(label(getString(note), 14, MUTED).apply { setPadding(0, dp(10), 0, dp(16)) })
+        when (current) {
+            MfiTarget.I2C -> {
+                val path = AirPlayPersistence.loadMfiI2cPath(this)
+                parent.addView(button(getString(R.string.home_mfi_i2c_path, path), false) {
+                    textInput(getString(R.string.home_mfi_i2c_device), path, secret = false) { value ->
+                        if (value.isBlank() || '\u0000' in value) {
+                            toast(getString(R.string.home_mfi_invalid_i2c_path))
+                        } else {
+                            AirPlayPersistence.saveMfiI2cPath(this, value)
+                            render()
+                        }
+                    }
+                }, matchButton(0, 60))
+            }
+            MfiTarget.REMOTE -> {
+                val server = AirPlayPersistence.loadRemoteMfiServer(this)
+                parent.addView(button(getString(
+                    R.string.home_mfi_remote_server,
+                    server.ifBlank { getString(R.string.home_mfi_not_set) },
+                ), false) {
+                    textInput(getString(R.string.home_mfi_server_address), server, secret = false) { value ->
+                        if (!validMfiServer(value)) {
+                            toast(getString(R.string.home_mfi_invalid_server))
+                        } else {
+                            AirPlayPersistence.saveRemoteMfiServer(this, value)
+                            render()
+                        }
+                    }
+                }, matchButton(0, 60))
+                val token = AirPlayPersistence.loadRemoteMfiToken(this)
+                parent.addView(button(getString(
+                    R.string.home_mfi_remote_token,
+                    getString(if (token.isBlank()) R.string.home_mfi_not_set else R.string.home_mfi_token_set),
+                ), false) {
+                    textInput(getString(R.string.home_mfi_token), token, secret = true) { value ->
+                        if ('\u0000' in value) {
+                            toast(getString(R.string.home_mfi_invalid_token))
+                        } else {
+                            AirPlayPersistence.saveRemoteMfiToken(this, value)
+                            render()
+                        }
+                    }
+                }, matchButton(10, 60))
+            }
+            else -> Unit
+        }
+    }
+
+    private fun mfiTargetName(target: MfiTarget): String = getString(when (target) {
+        MfiTarget.LOCAL -> R.string.home_mfi_local
+        MfiTarget.USB_CH341 -> R.string.home_mfi_usb
+        MfiTarget.I2C -> R.string.home_mfi_i2c
+        MfiTarget.REMOTE -> R.string.home_mfi_remote
+    })
+
+    private fun applyMfiTarget(target: MfiTarget) {
+        AirPlayPersistence.saveMfiTarget(this, target)
+        setupError = runCatching { DiPlayBootstrap.ensure(this) }.exceptionOrNull()?.let {
+            getString(R.string.home_setup_error)
+        }
+        render()
+        if (setupError == null && CarPlayBackgroundSession.hasSession()) {
+            connect(AirPlayPersistence.loadWirelessEnabled(this))
+        }
+    }
+
+    private fun validMfiServer(address: String): Boolean =
+        address.isNotBlank() && '\u0000' !in address &&
+            (address.startsWith("http://") || address.startsWith("https://"))
+
+    private fun localMfiDirectory(): File = File(noBackupFilesDir, LocalMfiAuthenticationClient.DIRECTORY)
+
     /** Media output: the full 1-40 channel range is selectable, never probed. */
     private fun mediaChannelControl(parent: LinearLayout) {
         val summary: (Int) -> String = {
@@ -525,6 +645,10 @@ class DiPlayActivity : ComponentActivity() {
 
     private fun connect(wireless: Boolean) {
         if (setupError != null) { toast(setupError!!); return }
+        if (AirPlayPersistence.loadMfiTarget(this) == MfiTarget.REMOTE &&
+            AirPlayPersistence.loadRemoteMfiServer(this).isBlank()) {
+            toast(getString(R.string.home_mfi_server_required)); return
+        }
         if (wireless && carHotspotOff()) { carHotspotOffDialog(); return }
         if (wireless && DiPlayPreferences.phoneAddress(this) == null) {
             pendingWireless = true; choosePhone(); return

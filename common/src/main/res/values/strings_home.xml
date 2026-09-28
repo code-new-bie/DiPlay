@@ -6,7 +6,7 @@
     <string name="home_permission_wireless_message">Allow Nearby devices and, on older Android versions, Location before resetting CarPlay Wi-Fi.</string>
 
     <!-- Setup -->
-    <string name="home_setup_error">Local setup could not finish. Reinstall the complete DiPlay beta APK and try again.</string>
+    <string name="home_setup_error">Authentication setup could not finish. Check the bundled local identity or choose another method.</string>
 
     <!-- Content descriptions -->
     <string name="home_cd_carplay">CarPlay</string>
@@ -39,7 +39,7 @@
 
     <!-- Settings page -->
     <string name="home_settings_title">Your drive, your way.</string>
-    <string name="home_settings_intro">Apply reconnects CarPlay for size, resolution, music buffer and frame rate. Other changes apply to your next connection.</string>
+    <string name="home_settings_intro">Applying display, audio or authentication changes reconnects CarPlay. Other changes apply to your next connection.</string>
 
     <string name="home_section_auto_connect">Automatic connection</string>
     <string name="home_toggle_connect_on_open">Connect when DiPlay opens</string>
@@ -49,6 +49,29 @@
     <string name="home_btn_choose_iphone_named">Choose iPhone · %1$s</string>
 
     <string name="home_section_wireless_connection">Wireless connection</string>
+    <string name="home_section_mfi">CarPlay authentication</string>
+    <string name="home_mfi_method">Authentication method</string>
+    <string name="home_mfi_local">Local offline</string>
+    <string name="home_mfi_usb">USB/CH341 chip</string>
+    <string name="home_mfi_i2c">I²C chip</string>
+    <string name="home_mfi_remote">Remote service</string>
+    <string name="home_mfi_local_note">Uses the local identity installed with this app.</string>
+    <string name="home_mfi_usb_note">Requires a connected CH341 adapter and MFi authentication chip.</string>
+    <string name="home_mfi_i2c_note">Reads the MFi chip at the specified device path. Device access is required.</string>
+    <string name="home_mfi_remote_note">Uses your configured authentication service. Enter its address before connecting.</string>
+    <string name="home_mfi_local_unavailable">No local authentication identity is installed.</string>
+    <string name="home_mfi_i2c_device">I²C device path</string>
+    <string name="home_mfi_i2c_path">I²C device · %1$s</string>
+    <string name="home_mfi_invalid_i2c_path">Enter a valid I²C device path.</string>
+    <string name="home_mfi_remote_server">Server · %1$s</string>
+    <string name="home_mfi_server_address">Server address</string>
+    <string name="home_mfi_server_required">Enter the remote authentication server address first.</string>
+    <string name="home_mfi_invalid_server">Use an http:// or https:// server address.</string>
+    <string name="home_mfi_remote_token">Access token · %1$s</string>
+    <string name="home_mfi_token">Access token</string>
+    <string name="home_mfi_token_set">configured</string>
+    <string name="home_mfi_not_set">not set</string>
+    <string name="home_mfi_invalid_token">The token contains an invalid character.</string>
     <string name="home_wireless_link_title">Wireless link</string>
     <string name="home_wireless_link_choice">Wireless link · %1$s</string>
     <string name="home_wireless_link_direct">Wi-Fi Direct · default</string>

@@ -6,7 +6,7 @@
     <string name="home_permission_wireless_message">重置 CarPlay Wi-Fi 前，请先允许“附近设备”权限；较旧版本的 Android 还需允许“位置信息”权限。</string>
 
     <!-- Setup -->
-    <string name="home_setup_error">本地安装未能完成。请重新安装完整的 DiPlay 测试版 APK，然后再试。</string>
+    <string name="home_setup_error">认证初始化失败。请检查随包提供的本地凭据，或选择其他认证方式。</string>
 
     <!-- Content descriptions -->
     <string name="home_cd_carplay">CarPlay</string>
@@ -39,7 +39,7 @@
 
     <!-- Settings page -->
     <string name="home_settings_title">你的驾驶，你做主。</string>
-    <string name="home_settings_intro">调整尺寸、分辨率、音乐缓冲或帧率后，应用时会重新连接 CarPlay。其他更改将在下次连接时生效。</string>
+    <string name="home_settings_intro">应用显示、音频或认证方式的更改时会重新连接 CarPlay。其他更改将在下次连接时生效。</string>
 
     <string name="home_section_auto_connect">自动连接</string>
     <string name="home_toggle_connect_on_open">打开 DiPlay 时自动连接</string>
@@ -49,6 +49,29 @@
     <string name="home_btn_choose_iphone_named">选择 iPhone · %1$s</string>
 
     <string name="home_section_wireless_connection">无线连接</string>
+    <string name="home_section_mfi">CarPlay 认证</string>
+    <string name="home_mfi_method">认证方式</string>
+    <string name="home_mfi_local">本地离线认证</string>
+    <string name="home_mfi_usb">USB/CH341 芯片</string>
+    <string name="home_mfi_i2c">I²C 芯片</string>
+    <string name="home_mfi_remote">远程服务</string>
+    <string name="home_mfi_local_note">使用随本应用安装的本地认证凭据。</string>
+    <string name="home_mfi_usb_note">需要连接 CH341 适配器及 MFi 认证芯片。</string>
+    <string name="home_mfi_i2c_note">从指定设备路径读取 MFi 芯片，需要相应的设备访问权限。</string>
+    <string name="home_mfi_remote_note">使用配置的认证服务。连接前请填写服务地址。</string>
+    <string name="home_mfi_local_unavailable">未安装本地认证凭据。</string>
+    <string name="home_mfi_i2c_device">I²C 设备路径</string>
+    <string name="home_mfi_i2c_path">I²C 设备 · %1$s</string>
+    <string name="home_mfi_invalid_i2c_path">请输入有效的 I²C 设备路径。</string>
+    <string name="home_mfi_remote_server">服务地址 · %1$s</string>
+    <string name="home_mfi_server_address">服务地址</string>
+    <string name="home_mfi_server_required">请先填写远程认证服务地址。</string>
+    <string name="home_mfi_invalid_server">服务地址需以 http:// 或 https:// 开头。</string>
+    <string name="home_mfi_remote_token">访问令牌 · %1$s</string>
+    <string name="home_mfi_token">访问令牌</string>
+    <string name="home_mfi_token_set">已设置</string>
+    <string name="home_mfi_not_set">未设置</string>
+    <string name="home_mfi_invalid_token">访问令牌包含无效字符。</string>
     <string name="home_wireless_link_title">无线连接方式</string>
     <string name="home_wireless_link_choice">无线连接方式 · %1$s</string>
     <string name="home_wireless_link_direct">Wi-Fi Direct · 默认</string>
