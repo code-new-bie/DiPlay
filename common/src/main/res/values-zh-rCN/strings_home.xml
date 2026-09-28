@@ -182,6 +182,8 @@
     <string name="home_section_audio">音频</string>
     <string name="home_toggle_audio_focus">音频焦点</string>
     <string name="home_toggle_audio_focus_desc">CarPlay 媒体向系统申请音频焦点；导航播报不会压低音乐。若开启后没有声音（部分车机焦点处理异常），请关闭本开关。更改在重新连接后生效。</string>
+    <string name="home_toggle_mute_local_media">关闭 DiPlay 本地媒体播放</string>
+    <string name="home_toggle_mute_local_media_desc">保留 CarPlay 导航、通话和 Siri 声音。音乐需在 iPhone 上另行选择蓝牙输出。更改后会重新连接 CarPlay。</string>
     <string name="home_media_channel_label">媒体音频通道</string>
     <string name="home_nav_channel_label">导航音频通道</string>
     <string name="home_nav_channel_auto">自动（系统路由）</string>

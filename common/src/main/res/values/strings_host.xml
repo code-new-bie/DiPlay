@@ -67,6 +67,8 @@
     <!-- Audio section -->
     <string name="host_audio_focus_label">Audio focus</string>
     <string name="host_audio_focus_desc">Navigation prompts lower media volume while they play</string>
+    <string name="host_mute_local_media_label">Mute DiPlay media playback</string>
+    <string name="host_mute_local_media_desc">Keep CarPlay navigation, calls and Siri audible. Select Bluetooth music output on iPhone separately. Applies when settings close.</string>
     <string name="host_adv_audio_label">Advanced audio channel mapping</string>
     <string name="host_adv_audio_desc">Route AAOS audio buses by CarPlay audio type</string>
 

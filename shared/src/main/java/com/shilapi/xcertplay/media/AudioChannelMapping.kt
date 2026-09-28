@@ -44,6 +44,13 @@ internal object AudioChannelMapper {
         }
     }
 
+    fun shouldPlayLocally(
+        audioType: String,
+        payloadType: Int,
+        mode: AudioChannelMappingMode,
+        muteMedia: Boolean,
+    ): Boolean = !muteMedia || map(audioType, payloadType, mode).channel != AudioChannel.MEDIA
+
     private fun mapMobileCompatible(
         audioType: String,
         payloadType: Int,

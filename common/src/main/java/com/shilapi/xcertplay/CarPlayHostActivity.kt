@@ -274,6 +274,7 @@ class CarPlayHostActivity : ComponentActivity() {
     private var advancedAudioChannelMappingSupported = false
     private var advancedAudioChannelMapping = false
     private var audioFocusEnabled = false
+    private var muteLocalMediaPlayback = false
     private var mediaAudioChannel = 0
     private var navigationAudioChannel = 0
     private var navChannelInput: EditText? = null
@@ -444,6 +445,7 @@ class CarPlayHostActivity : ComponentActivity() {
             advancedAudioChannelMappingSupported &&
                 AirPlayPersistence.loadAdvancedAudioChannelMapping(this)
         audioFocusEnabled = AirPlayPersistence.loadAudioFocusEnabled(this)
+        muteLocalMediaPlayback = AirPlayPersistence.loadMuteLocalMediaPlayback(this)
         mediaAudioChannel = AirPlayPersistence.loadMediaAudioChannel(this)
         navigationAudioChannel = AirPlayPersistence.loadNavigationAudioChannel(this)
         debugLogsEnabled = AirPlayPersistence.loadDebugLogsEnabled(this)
@@ -565,6 +567,7 @@ class CarPlayHostActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (!menuOpen) muteLocalMediaPlayback = AirPlayPersistence.loadMuteLocalMediaPlayback(this)
         locationPermissionAvailable = hasFineLocationPermission()
         if (locationReportingEnabled && !locationPermissionAvailable && !menuOpen) {
             requestLocationPermission()
@@ -846,6 +849,20 @@ class CarPlayHostActivity : ComponentActivity() {
             ) { checked ->
                 audioFocusEnabled = checked
                 appendLog("Audio focus ${if (checked) "enabled" else "disabled"}")
+            },
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(12) },
+        )
+        content.addView(
+            settingsSwitchRow(
+                label = getString(R.string.host_mute_local_media_label),
+                checked = muteLocalMediaPlayback,
+                description = getString(R.string.host_mute_local_media_desc),
+            ) { checked ->
+                muteLocalMediaPlayback = checked
+                appendLog("Local media playback ${if (checked) "muted" else "enabled"}; applies when settings close")
             },
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -1321,6 +1338,7 @@ class CarPlayHostActivity : ComponentActivity() {
         AirPlayPersistence.saveAutoStartOnBoot(this, autoStartOnBoot)
         AirPlayPersistence.saveAdvancedAudioChannelMapping(this, advancedAudioChannelMapping)
         AirPlayPersistence.saveAudioFocusEnabled(this, audioFocusEnabled)
+        AirPlayPersistence.saveMuteLocalMediaPlayback(this, muteLocalMediaPlayback)
         AirPlayPersistence.saveMediaAudioChannel(this, mediaAudioChannel)
         AirPlayPersistence.saveNavigationAudioChannel(this, navigationAudioChannel)
         AirPlayPersistence.saveDisplayScaleTenths(this, displayScaleTenths)
@@ -2942,6 +2960,7 @@ class CarPlayHostActivity : ComponentActivity() {
             preferSoftwareHevcDecoder = hevcSoftwareDecoderEnabled,
             advancedAudioChannelMapping = advancedAudioChannelMapping,
             audioFocusEnabled = audioFocusEnabled,
+            muteLocalMediaPlayback = AirPlayPersistence.loadMuteLocalMediaPlayback(this),
             mediaChannel = mediaAudioChannel,
             navigationChannel = navigationAudioChannel,
             context = this,

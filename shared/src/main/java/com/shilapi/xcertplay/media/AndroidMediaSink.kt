@@ -45,6 +45,7 @@ class AndroidMediaSink(
     private val preferSoftwareHevcDecoder: Boolean = false,
     private val advancedAudioChannelMapping: Boolean = false,
     private val audioFocusEnabled: Boolean = false,
+    private val muteLocalMediaPlayback: Boolean = false,
     private val mediaChannel: Int = 0,
     private val navigationChannel: Int = 0,
     context: Context? = null,
@@ -131,10 +132,15 @@ class AndroidMediaSink(
     }
 
     override fun onAudioStarted(id: AudioStreamId, format: AudioFormat, firstSample: Int) {
+        if (!shouldPlayLocally(format)) {
+            onAudioDiagnostic("Audio: local media playback muted audioType=${format.audioType} type=${format.payloadType}")
+            return
+        }
         audioRenderer(id, format).start()
     }
 
     override fun onAudioRtp(id: AudioStreamId, format: AudioFormat, rtp: ByteArray, sample: Int) {
+        if (!shouldPlayLocally(format)) return
         audioRenderer(id, format).submit(rtp, sample)
     }
 
@@ -179,6 +185,14 @@ class AndroidMediaSink(
                 report = { videoDiagnosticHandlers[type]?.invoke(it) },
             )
         }
+
+    private fun shouldPlayLocally(format: AudioFormat): Boolean = AudioChannelMapper.shouldPlayLocally(
+        format.audioType,
+        format.payloadType,
+        if (advancedAudioChannelMapping) AudioChannelMappingMode.AUTOMOTIVE_BUS
+        else AudioChannelMappingMode.MOBILE_COMPATIBLE,
+        muteLocalMediaPlayback,
+    )
 
     @Synchronized
     private fun audioRenderer(id: AudioStreamId, format: AudioFormat): AudioRenderer {
@@ -678,7 +692,8 @@ private class AudioRenderer(
         val streamOverride = channelOverride(selection.channel)
         val attributes = audioAttributesFor(selection, streamOverride)
         trackAttributes = attributes
-        val plan = MediaAudioBuffer.plan(format.audioType, format.sampleRate, format.channels, minBuffer, mediaBufferMillis)
+        val plan = MediaAudioBuffer.plan(selection.channel == AudioChannel.MEDIA,
+            format.sampleRate, format.channels, minBuffer, mediaBufferMillis)
         val frameBytes = if (format.channels >= 2) 4 else 2
         bytesPerSecond = format.sampleRate * frameBytes
         val built = AudioTrack.Builder()
@@ -1013,7 +1028,7 @@ private class AudioRenderer(
 
     private fun maintainPlaybackBuffer() {
         val track = track ?: return
-        if (bufferProgress.shouldRebuffer(format.audioType, playbackStarted,
+        if (bufferProgress.shouldRebuffer(mappedChannel == AudioChannel.MEDIA, playbackStarted,
                 track.underrunCount > underrunsAtPlaybackStart, queue.isEmpty(), track.playbackHeadPosition)) {
             // The hardware buffer has actually drained. Pause without flushing or discarding PCM,
             // then use the configured start threshold again when music resumes.
@@ -1036,7 +1051,8 @@ private class AudioRenderer(
         if (!force && now - statsWindowStartNs < STATS_WINDOW_NS) return
         val underruns = track?.underrunCount ?: 0
         val lastRx = lastArrivalNs.get()
-        val line = "audio stats audioType=${format.audioType} codec=${format.codec} rx=${packetsReceived.getAndSet(0)} " +
+        val line = "audio stats audioType=${format.audioType} channel=$mappedChannel " +
+            "routeType=${track?.routedDevice?.type ?: -1} codec=${format.codec} rx=${packetsReceived.getAndSet(0)} " +
             "dropped=${packetsDropped.getAndSet(0)} underruns=+${underruns - statsLastUnderruns} queue=${queue.size} " +
             "playing=$playbackStarted maxGapMs=${maxArrivalGapMs.getAndSet(0)} " +
             "sinceRxMs=${if (lastRx == 0L) -1 else (now - lastRx) / 1_000_000L} maxWriteMs=$maxWriteMs " +

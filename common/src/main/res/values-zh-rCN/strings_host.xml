@@ -67,6 +67,8 @@
     <!-- 音频分区 -->
     <string name="host_audio_focus_label">音频焦点</string>
     <string name="host_audio_focus_desc">导航播报时自动压低媒体音量</string>
+    <string name="host_mute_local_media_label">关闭 DiPlay 本地媒体播放</string>
+    <string name="host_mute_local_media_desc">保留 CarPlay 导航、通话和 Siri 声音。音乐需在 iPhone 上另行选择蓝牙输出。关闭设置后生效。</string>
     <string name="host_adv_audio_label">高级音频声道映射</string>
     <string name="host_adv_audio_desc">按 CarPlay 音频类型分流 AAOS 音频总线</string>
 

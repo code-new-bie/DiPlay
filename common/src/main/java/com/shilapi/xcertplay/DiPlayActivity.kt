@@ -227,6 +227,10 @@ class DiPlayActivity : ComponentActivity() {
         }
         section(content, getString(R.string.home_section_audio)) { card ->
             toggle(card, getString(R.string.home_toggle_audio_focus), getString(R.string.home_toggle_audio_focus_desc), AirPlayPersistence.loadAudioFocusEnabled(this)) { AirPlayPersistence.saveAudioFocusEnabled(this, it) }
+            toggle(card, getString(R.string.home_toggle_mute_local_media), getString(R.string.home_toggle_mute_local_media_desc), AirPlayPersistence.loadMuteLocalMediaPlayback(this)) {
+                AirPlayPersistence.saveMuteLocalMediaPlayback(this, it)
+                if (CarPlayBackgroundSession.hasSession()) connect(AirPlayPersistence.loadWirelessEnabled(this))
+            }
             mediaChannelControl(card)
             navigationChannelControl(card)
         }
