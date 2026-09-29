@@ -524,13 +524,24 @@ class CarPlayHostActivity : ComponentActivity() {
             PackageManager.PERMISSION_GRANTED
 
     private fun requestVpnConsent() {
+        if (vpnReady || awaitingVpnConsent) return
         val consent = CarPlayVpnService.prepare(this)
         if (consent == null) {
             vpnReady = true
             maybeStartCarPlay()
         } else {
             awaitingVpnConsent = true
-            vpnConsent.launch(consent)
+            fun cancelled() {
+                awaitingVpnConsent = false
+                setConnectionStage(getString(R.string.host_vpn_denied))
+            }
+            android.app.AlertDialog.Builder(this)
+                .setTitle(R.string.host_vpn_explain_title)
+                .setMessage(R.string.host_vpn_explain_message)
+                .setPositiveButton(R.string.host_vpn_explain_continue) { _, _ -> vpnConsent.launch(consent) }
+                .setNegativeButton(R.string.host_cancel) { _, _ -> cancelled() }
+                .setOnCancelListener { cancelled() }
+                .show()
         }
     }
 

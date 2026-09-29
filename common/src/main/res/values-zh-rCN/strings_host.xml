@@ -8,7 +8,10 @@
     <string name="host_reset_wifi">重置 CarPlay Wi-Fi</string>
     <string name="host_back_to_diplay">返回 DiPlay</string>
     <string name="host_three_finger_hint">在 CarPlay 中，三指下滑即可打开 DiPlay 设置。</string>
-    <string name="host_vpn_denied">VPN 授权被拒绝</string>
+    <string name="host_vpn_denied">有线 CarPlay 需要本地网络授权。返回 DiPlay 后可重试。</string>
+    <string name="host_vpn_explain_title">允许有线 CarPlay 连接</string>
+    <string name="host_vpn_explain_message">DiPlay 需要将 iPhone 的 USB 网络接入车机。Android 将其显示为“VPN 连接”。这个 VPN 接口仅在车机本地使用，不连接远程 VPN 服务器，也不接管车机的互联网流量。点击“继续”后，请在 Android 系统提示中允许。</string>
+    <string name="host_vpn_explain_continue">继续</string>
 
     <!-- 设置菜单：标题与分类 -->
     <string name="host_settings_title">CarPlay 设置</string>

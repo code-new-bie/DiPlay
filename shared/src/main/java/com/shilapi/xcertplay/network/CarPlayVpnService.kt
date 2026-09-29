@@ -284,7 +284,7 @@ class CarPlayVpnService : VpnService() {
         private const val TAG = "xcertplay-usb"
         private const val LINK_PREFIX = 64
         private const val LINK_LOCAL_ROUTE = "fe80::"
-        private const val SESSION_NAME = "xcertplay CarPlay"
+        private const val SESSION_NAME = "DiPlay USB CarPlay"
         private const val TUN_MTU = 1500
 
         /** Returns the VPN consent intent, or null when consent is already granted. */

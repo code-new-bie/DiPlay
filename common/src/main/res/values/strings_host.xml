@@ -8,7 +8,10 @@
     <string name="host_reset_wifi">Reset CarPlay Wi-Fi</string>
     <string name="host_back_to_diplay">Back to DiPlay</string>
     <string name="host_three_finger_hint">In CarPlay, swipe down with three fingers to open DiPlay settings.</string>
-    <string name="host_vpn_denied">VPN consent was denied</string>
+    <string name="host_vpn_denied">Wired CarPlay needs local network permission. Return to DiPlay to retry.</string>
+    <string name="host_vpn_explain_title">Allow the wired CarPlay connection</string>
+    <string name="host_vpn_explain_message">DiPlay connects your iPhone’s USB network to this head unit. Android calls this a VPN connection. The VPN interface is local to the head unit: it does not connect to a remote VPN server or route your internet traffic. Continue, then allow the Android permission prompt.</string>
+    <string name="host_vpn_explain_continue">Continue</string>
 
     <!-- Settings menu: title and category headers -->
     <string name="host_settings_title">CarPlay settings</string>
