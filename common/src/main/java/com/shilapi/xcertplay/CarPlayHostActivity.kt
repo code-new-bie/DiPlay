@@ -586,6 +586,7 @@ class CarPlayHostActivity : ComponentActivity() {
         appearanceMonitor?.updateUiMode(resources.configuration.uiMode)
         if (!menuOpen) {
             carPlayName = AirPlayPersistence.loadCarPlayName(this)
+            oemLabel = AirPlayPersistence.loadOemLabel(this)
             mfiTarget = AirPlayPersistence.loadMfiTarget(this)
             mfiI2cPath = AirPlayPersistence.loadMfiI2cPath(this)
             remoteMfiServer = AirPlayPersistence.loadRemoteMfiServer(this)

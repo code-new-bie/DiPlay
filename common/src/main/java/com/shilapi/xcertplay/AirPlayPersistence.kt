@@ -358,9 +358,18 @@ object AirPlayPersistence {
     fun saveCarPlayName(context: Context, name: String) {
         val normalized = name.replace('\u0000', ' ').trim()
             .ifBlank { DEFAULT_CARPLAY_NAME }
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putString(KEY_CARPLAY_NAME, normalized)
-            .apply()
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val previousName = loadCarPlayName(context)
+        val previousLabel = prefs.getString(KEY_OEM_LABEL, null)
+        prefs.edit().apply {
+            putString(KEY_CARPLAY_NAME, normalized)
+            // Keep a separately customized CarPlay home icon label, but make the standard
+            // vehicle-name setting control the return-to-car label too.
+            if (previousLabel.isNullOrBlank() || previousLabel == DEFAULT_OEM_LABEL ||
+                previousLabel == previousName) {
+                putString(KEY_OEM_LABEL, normalized)
+            }
+        }.apply()
     }
 
     fun loadManufacturer(context: Context): String =
@@ -387,11 +396,16 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadOemLabel(context: Context): String =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getString(KEY_OEM_LABEL, DEFAULT_OEM_LABEL)
-            // iOS hides the car icon without a label.
-            .orEmpty().ifBlank { DEFAULT_OEM_LABEL }
+    fun loadOemLabel(context: Context): String {
+        val stored = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString(KEY_OEM_LABEL, null)
+        // Existing installs may already have a new vehicle name with the old default icon label.
+        if (stored.isNullOrBlank() || stored == DEFAULT_OEM_LABEL) {
+            return loadCarPlayName(context).takeUnless { it == DEFAULT_CARPLAY_NAME }
+                ?: DEFAULT_OEM_LABEL
+        }
+        return stored
+    }
 
     fun saveOemLabel(context: Context, oemLabel: String) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()

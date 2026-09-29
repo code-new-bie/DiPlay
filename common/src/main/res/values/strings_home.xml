@@ -53,7 +53,7 @@
     <string name="home_section_carplay_identity">CarPlay identity</string>
     <string name="home_carplay_name">CarPlay vehicle name</string>
     <string name="home_carplay_name_value">Vehicle name · %1$s</string>
-    <string name="home_carplay_name_note">Shown as the car name on your iPhone. Changes apply after reconnecting CarPlay.</string>
+    <string name="home_carplay_name_note">Shown as the car name on your iPhone and the return-to-car label in CarPlay. Changes apply after reconnecting.</string>
     <string name="home_carplay_name_too_long">Use at most 63 UTF-8 bytes.</string>
     <string name="home_mfi_method">Authentication method</string>
     <string name="home_mfi_local">Local offline</string>
