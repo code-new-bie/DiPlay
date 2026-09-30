@@ -1,0 +1,9 @@
+<resources>
+    <string name="contrib_wifi_home_direct_channel_auto">自动</string>
+    <string name="contrib_wifi_home_direct_channel_choice">Wi-Fi Direct 信道 · %1$s</string>
+    <string name="contrib_wifi_home_direct_channel_item">信道 %1$d（%2$d MHz）</string>
+    <string name="contrib_wifi_home_direct_channel_note">自动模式优先使用上次确认可用的信道。支持查询的 Android 14 及以上设备显示系统允许用于 Wi-Fi Direct 的信道；其他设备显示常用的非 DFS 候选信道。车机未连接 Wi-Fi 时先尝试选定信道，若被拒绝则尝试其他信道。</string>
+    <string name="contrib_wifi_home_direct_channel_title">Wi-Fi Direct 信道</string>
+    <string name="contrib_wifi_home_direct_channel_unavailable">%1$d MHz（当前不可用）</string>
+    <string name="contrib_wifi_home_wireless_direct_note">请开启车机的 Wi-Fi 开关，按提示允许位置或附近设备权限，并在 Android 要求时开启定位。如果播放卡顿，可尝试使用车机自带的 5 GHz 热点。</string>
+</resources>

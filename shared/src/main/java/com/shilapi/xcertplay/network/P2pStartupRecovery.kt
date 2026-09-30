@@ -12,9 +12,9 @@ internal class P2pCreateRejected(val reason: Int, message: String) : IOException
 /** Only an explicit rejection permits another request; a timeout may still create a group. */
 internal object P2pStartupRecovery {
     fun rememberedFrequency(frequency: Int): P2pCreationRequest? = when {
-        frequency in 2412..2462 && (frequency - 2412) % 5 == 0 ->
+        frequency in 2412..2472 && (frequency - 2412) % 5 == 0 ->
             P2pCreationRequest(P2pCreationMode.FIXED_2_GHZ, frequency)
-        frequency in listOf(5180, 5200, 5220, 5240, 5745, 5765, 5785, 5805, 5825) ->
+        frequency >= 5000 && WifiP2pChannelPreference.supportsFrequency(frequency) ->
             P2pCreationRequest(P2pCreationMode.FIXED_5_GHZ, frequency)
         else -> null
     }

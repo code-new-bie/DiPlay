@@ -2,6 +2,8 @@
 // UI copy and visual language adapted from DiAuto. See docs/THIRD_PARTY_NOTICES.md.
 package com.shilapi.xcertplay
 
+import com.shilapi.xcertplay.network.WifiP2pChannelPreference
+
 import android.Manifest
 import android.app.AlertDialog
 import android.bluetooth.BluetoothManager
@@ -540,8 +542,39 @@ class DiPlayActivity : ComponentActivity() {
             }, matchButton(12, 60))
             parent.addView(label(if (pendingCarHotspotSetup) getString(R.string.finish_setup_save_your_hotspot_details_to_use_this_mode) else if (carHotspotOff()) getString(R.string.hotspot_details_off) else getString(R.string.hotspot_details_saved), 15, if (carHotspotOff()) WARNING else MUTED).apply { setPadding(0, dp(12), 0, 0) })
         } else {
-            parent.addView(label(getString(R.string.turn_the_car_s_wi_fi_switch_on_allow_location_nearby_devic), 16, MUTED))
-            parent.addView(button(getString(R.string.open_car_wi_fi_settings), false) { openCarClientWifiSettings() }, matchButton(12, 60))
+            parent.addView(label(getString(R.string.contrib_wifi_home_wireless_direct_note), 14, MUTED).apply {
+                setPadding(0, 0, 0, dp(10))
+            })
+            val frequencies = listOf<Int?>(null) + WifiP2pChannelPreference.availableFrequencies(this)
+            val names = frequencies.map { frequency ->
+                if (frequency == null) getString(R.string.contrib_wifi_home_direct_channel_auto)
+                else getString(R.string.contrib_wifi_home_direct_channel_item,
+                    if (frequency < 5000) (frequency - 2407) / 5 else (frequency - 5000) / 5,
+                    frequency)
+            }.toTypedArray()
+            val current = WifiP2pChannelPreference.load(this)
+            val currentName = names.getOrNull(frequencies.indexOf(current)) ?: getString(
+                R.string.contrib_wifi_home_direct_channel_unavailable, current)
+            val channel = button(getString(R.string.contrib_wifi_home_direct_channel_choice, currentName), false) {}
+            channel.setOnClickListener {
+                var selection = frequencies.indexOf(WifiP2pChannelPreference.load(this)).coerceAtLeast(0)
+                AlertDialog.Builder(this).setTitle(R.string.contrib_wifi_home_direct_channel_title)
+                    .setSingleChoiceItems(names, selection) { _, index -> selection = index }
+                    .setPositiveButton(if (CarPlayBackgroundSession.hasSession()) R.string.apply_and_reconnect else R.string.save) { _, _ ->
+                        val selected = frequencies[selection]
+                        if (selected != WifiP2pChannelPreference.load(this)) {
+                            WifiP2pChannelPreference.save(this, selected)
+                            render()
+                            if (CarPlayBackgroundSession.hasSession()) connect(true)
+                        }
+                    }
+                    .setNegativeButton(R.string.cancel, null).show()
+            }
+            parent.addView(channel, matchButton(0, 60))
+            parent.addView(label(getString(R.string.contrib_wifi_home_direct_channel_note), 14, MUTED).apply {
+                setPadding(0, dp(8), 0, dp(18))
+            })
+            parent.addView(button(getString(R.string.open_car_wi_fi_settings), false) { openCarClientWifiSettings() }, matchButton(0, 60))
         }
     }
 

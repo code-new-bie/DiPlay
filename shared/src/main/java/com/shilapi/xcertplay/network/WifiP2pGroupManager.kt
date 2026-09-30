@@ -97,9 +97,21 @@ class WifiP2pGroupManager(
             val stationFrequency = station.alignmentFrequency
             checkPrerequisites(station)
             val remembered = configurationMemory.read()
-            val preferred = remembered?.takeIf { it.stationMHz == stationFrequency }
+            // A disconnected station has no channel to align with. Keep a previously
+            // confirmed 5 GHz P2P channel instead of always falling back to channel 36.
+            // While the station is connecting or on a different channel, prefer its
+            // current alignment and leave the remembered channel for a later session.
+            val disconnectedFiveGhz = station.state == SupplicantState.DISCONNECTED &&
+                remembered?.request?.frequencyMHz?.let { is5Ghz(it) && it == remembered.actualMHz } == true
+            val preferred = remembered?.takeIf { it.stationMHz == stationFrequency || disconnectedFiveGhz }
+            val selectedFrequency = WifiP2pChannelPreference.load(appContext)
+            val userRequest = if (stationFrequency == null && selectedFrequency != null &&
+                selectedFrequency in WifiP2pChannelPreference.availableFrequencies(appContext)) {
+                P2pStartupRecovery.rememberedFrequency(selectedFrequency)
+            } else null
+            diagnostic("Wi-Fi P2P channel preference=${selectedFrequency ?: "auto"} applied=${userRequest != null}")
             diagnostic(when {
-                preferred != null -> "Wi-Fi P2P remembered first mode=${preferred.request.mode} frequencyMHz=${preferred.request.frequencyMHz ?: "auto"}"
+                preferred != null -> "Wi-Fi P2P remembered first mode=${preferred.request.mode} frequencyMHz=${preferred.request.frequencyMHz ?: "auto"} reason=${if (disconnectedFiveGhz) "station_disconnected" else "station_match"}"
                 remembered != null -> "Wi-Fi P2P remembered skipped=station_channel_changed"
                 else -> "Wi-Fi P2P remembered unavailable"
             })
@@ -135,7 +147,7 @@ class WifiP2pGroupManager(
 
             val creation = P2pStartupRecovery.create(
                 stationFrequency = stationFrequency,
-                preferred = preferred?.request,
+                preferred = userRequest ?: preferred?.request,
                 beforeRetry = {
                     ensureStartActive(attempt)
                     // Do not cancel discovery, toggle Wi-Fi, or remove a newly observed group.
@@ -169,14 +181,16 @@ class WifiP2pGroupManager(
                     diagnostic("Wi-Fi P2P create mode=${selection.mode} frequencyMHz=${selection.frequencyMHz ?: "auto"}")
                     // The API 29 overload with null config uses system-generated credentials
                     // without requesting a persistent group, unlike the older two-argument API.
-                    val usingRemembered = preferred?.request == selection
+                    val usingRemembered = userRequest == null && preferred?.request == selection
                     if (usingRemembered) synchronized(stateLock) { rememberedAttempt = preferred }
                     try {
                         p2pManager.createGroup(p2pChannel, config, createActionListener(attempt, request))
                         awaitGroupCreated(attempt, request, deadlineNanos, timeoutMillis)
                     } catch (failure: P2pCreateRejected) {
-                        if (usingRemembered && failure.reason == WifiP2pManager.ERROR && preferred != null) {
-                            if (configurationMemory.forget(preferred)) diagnostic("Wi-Fi P2P remembered cleared=create_rejected")
+                        if (usingRemembered && failure.reason == WifiP2pManager.ERROR) {
+                            preferred?.let {
+                                if (configurationMemory.forget(it)) diagnostic("Wi-Fi P2P remembered cleared=create_rejected")
+                            }
                         }
                         throw failure
                     }

@@ -1,0 +1,9 @@
+<resources>
+    <string name="contrib_wifi_home_direct_channel_auto">Auto</string>
+    <string name="contrib_wifi_home_direct_channel_choice">Wi-Fi Direct channel · %1$s</string>
+    <string name="contrib_wifi_home_direct_channel_item">Channel %1$d (%2$d MHz)</string>
+    <string name="contrib_wifi_home_direct_channel_note">Auto uses the last confirmed channel. Where supported, Android 14+ lists channels allowed for Wi-Fi Direct; otherwise common non-DFS candidates are shown. A selected channel is tried first when the car is disconnected from Wi-Fi. If rejected, DiPlay tries other channels.</string>
+    <string name="contrib_wifi_home_direct_channel_title">Wi-Fi Direct channel</string>
+    <string name="contrib_wifi_home_direct_channel_unavailable">%1$d MHz (currently unavailable)</string>
+    <string name="contrib_wifi_home_wireless_direct_note">Turn the car’s Wi-Fi switch on. Allow Location / Nearby devices if requested and enable Location when Android asks. If playback stutters, try the built-in car hotspot at 5 GHz.</string>
+</resources>
