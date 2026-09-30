@@ -1,0 +1,9 @@
+<resources>
+    <string name="contrib_scale_home_btn_icon_size">图标与文字大小 · %1$s</string>
+    <string name="contrib_scale_home_dialog_icon_size_title">CarPlay 图标与文字大小</string>
+    <string name="contrib_scale_home_icon_size_note">尺寸越小，占用的处理性能越多。如果播放卡顿，请选择“默认”。应用尺寸时会重新连接 CarPlay。</string>
+    <string name="contrib_scale_home_scale_115">大 · 115%</string>
+    <string name="contrib_scale_home_scale_75">更小 · 75%</string>
+    <string name="contrib_scale_home_scale_85">小 · 85%</string>
+    <string name="contrib_scale_home_scale_default">默认</string>
+</resources>

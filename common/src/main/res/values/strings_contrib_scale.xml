@@ -1,0 +1,9 @@
+<resources>
+    <string name="contrib_scale_home_btn_icon_size">Icon and text size · %1$s</string>
+    <string name="contrib_scale_home_dialog_icon_size_title">CarPlay icon and text size</string>
+    <string name="contrib_scale_home_icon_size_note">Smaller sizes use more processing power. Choose Default if playback slows. Applying a size reconnects CarPlay.</string>
+    <string name="contrib_scale_home_scale_115">Large · 115%</string>
+    <string name="contrib_scale_home_scale_75">Smaller · 75%</string>
+    <string name="contrib_scale_home_scale_85">Small · 85%</string>
+    <string name="contrib_scale_home_scale_default">Default</string>
+</resources>

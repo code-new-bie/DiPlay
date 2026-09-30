@@ -254,6 +254,7 @@ class DiPlayActivity : ComponentActivity() {
             card.addView(button("${getString(R.string.choose_iphone_prefix)}${DiPlayPreferences.phoneName(this)}", false) { choosePhone() }, matchButton(12, 60))
         }
         section(content, getString(R.string.display_and_performance), R.drawable.ic_dp_display) { card ->
+            iconSizeControl(card)
             carPlaySizeControl(card)
             choice(card, getString(R.string.resolution), listOf(getString(R.string.resolution_native), getString(R.string.s_80_lighter_load), getString(R.string.s_60_lightest_load)), listOf(10, 8, 6).indexOf(AirPlayPersistence.loadDisplayScaleTenths(this)).coerceAtLeast(0)) { AirPlayPersistence.saveDisplayScaleTenths(this, listOf(10, 8, 6)[it]) }
             val bufferPresets = com.shilapi.xcertplay.media.MediaAudioBuffer.presets
@@ -442,6 +443,32 @@ class DiPlayActivity : ComponentActivity() {
     }
 
     // The car hotspot link needs the hotspot on; DiPlay only checks it (turning it on needs ADB-only permission).
+    private fun iconSizeControl(parent: LinearLayout) {
+        val presets = com.shilapi.xcertplay.airplay.CarPlayUiScale.presets
+        fun label(percent: Int) = com.shilapi.xcertplay.airplay.CarPlayUiScale.label(percent)
+        val control = button(getString(R.string.contrib_scale_home_btn_icon_size, label(AirPlayPersistence.loadUiScalePercent(this))), false) {}
+        control.setOnClickListener {
+            val current = AirPlayPersistence.loadUiScalePercent(this)
+            var selection = presets.indexOf(current)
+            AlertDialog.Builder(this).setTitle(getString(R.string.contrib_scale_home_dialog_icon_size_title))
+                .setSingleChoiceItems(arrayOf(getString(R.string.contrib_scale_home_scale_75), getString(R.string.contrib_scale_home_scale_85), getString(R.string.contrib_scale_home_scale_default), getString(R.string.contrib_scale_home_scale_115)), selection) { _, index -> selection = index }
+                .setPositiveButton(if (CarPlayBackgroundSession.hasSession()) getString(R.string.apply_and_reconnect) else getString(R.string.save)) { _, _ ->
+                    val selected = presets[selection]
+                    DisplayDiagnosticSnapshot.selection(this, current, selected,
+                        selected != current && CarPlayBackgroundSession.hasSession())
+                    AirPlayPersistence.saveUiScalePercent(this, selected)
+                    control.text = getString(R.string.contrib_scale_home_btn_icon_size, label(selected))
+                    if (selected != current && CarPlayBackgroundSession.hasSession()) {
+                        connect(AirPlayPersistence.loadWirelessEnabled(this))
+                    }
+                }.setNegativeButton(getString(R.string.cancel), null).show()
+        }
+        parent.addView(control, matchButton(0, 60))
+        parent.addView(label(getString(R.string.contrib_scale_home_icon_size_note), 14, MUTED).apply {
+            setPadding(0, dp(8), 0, dp(18))
+        })
+    }
+
     private fun carHotspotOff(): Boolean =
         AirPlayPersistence.loadWirelessHotspotMode(this) == WirelessHotspotMode.MANUAL &&
             com.shilapi.xcertplay.network.CarHotspotStatus.isEnabled(this) == false
