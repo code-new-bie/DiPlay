@@ -324,6 +324,7 @@ class CarPlayHostActivity : ComponentActivity() {
     private var menuOpen = false
     private var latestStage = "Preparing CarPlay"
     private var darkMode = false
+    private var appearanceMonitor: CarPlayAppearanceMonitor? = null
     private var activeAirPlaySession: AirPlaySession? = null
     private val activeScreenStreamTypes = mutableSetOf<Int>()
     private var handshakeResetInProgress = false
@@ -401,6 +402,13 @@ class CarPlayHostActivity : ComponentActivity() {
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         initializeSessionLog()
         darkMode = isDarkMode(resources.configuration.uiMode)
+        appearanceMonitor = CarPlayAppearanceMonitor(this, mainHandler, resources.configuration.uiMode) { night ->
+            if (night != darkMode) {
+                darkMode = night
+                appendLog("CarPlay appearance changed to ${if (night) "dark" else "light"}")
+                syncAirPlayDarkMode()
+            }
+        }.also { it.start() }
         advancedAudioChannelMappingSupported =
             resources.getBoolean(R.bool.config_advanced_audio_channel_mapping)
         airPlayIdentity = AirPlayPersistence.loadIdentity(this)
@@ -575,6 +583,7 @@ class CarPlayHostActivity : ComponentActivity() {
             recreate()
             return
         }
+        appearanceMonitor?.updateUiMode(resources.configuration.uiMode)
         locationPermissionAvailable = hasFineLocationPermission()
         if (locationReportingEnabled && !locationPermissionAvailable && !menuOpen) {
             requestLocationPermission()
@@ -747,11 +756,7 @@ class CarPlayHostActivity : ComponentActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        val nextDarkMode = isDarkMode(newConfig.uiMode)
-        if (nextDarkMode != darkMode) {
-            darkMode = nextDarkMode
-            syncAirPlayDarkMode()
-        }
+        appearanceMonitor?.updateUiMode(newConfig.uiMode)
         applyFullscreenMode()
         stageStatusView?.maxWidth = (resources.displayMetrics.widthPixels * 0.78f).toInt()
         scrollLogsToBottom()
@@ -762,6 +767,7 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        appearanceMonitor?.stop()
         clusterMonitor?.stop()
         dismissClusterPresentation()
         mainHandler.removeCallbacks(applyDisplaySize)
