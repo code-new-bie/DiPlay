@@ -1,0 +1,12 @@
+<resources>
+    <string name="hud_demo_ready">独立 HUD 测试已就绪</string>
+    <string name="hud_demo_description">请停车测试：先显示 Muscat Road 左转 500 米，再显示 Sultan Qaboos Street 右转 800 米；每段持续 8 秒，之后清除。</string>
+    <string name="hud_demo_start">开始 16 秒测试</string>
+    <string name="hud_demo_clear">清除 HUD</string>
+    <string name="hud_demo_guidance_left">左转 — 500 米\n%1$s</string>
+    <string name="hud_demo_guidance_right">右转 — 800 米\n%1$s</string>
+    <string name="hud_demo_clear_unavailable">无法清除 HUD</string>
+    <string name="hud_demo_test_unavailable">无法进行测试</string>
+    <string name="hud_demo_clear_sent">已发送清除指令，请检查前挡风玻璃</string>
+    <string name="hud_demo_clear_failed">清除失败，请点击“清除 HUD”重试</string>
+</resources>

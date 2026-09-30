@@ -1,5 +1,6 @@
 package com.shilapi.xcertplay
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -20,7 +21,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.shilapi.xcertplay.host.R
 import com.shilapi.xcertplay.mfi.MfiProtocolMajorResult
 import com.shilapi.xcertplay.mfi.MfiSelfCheck
 import com.shilapi.xcertplay.mfi.MfiSelfCheckResult
@@ -30,6 +34,10 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLocale.wrap(newBase))
+    }
+
     private val executor: ExecutorService = Executors.newSingleThreadExecutor()
     private var status by mutableStateOf<DiagnosticStatus>(DiagnosticStatus.Idle)
 
@@ -44,12 +52,12 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(padding).padding(24.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        Text("Board I2C diagnostic")
+                        Text(stringResource(R.string.contrib_localization_misc_board_i2c_diagnostic))
                         OutlinedTextField(
                             value = devicePath,
                             onValueChange = { devicePath = it },
                             modifier = Modifier.fillMaxWidth(),
-                            label = { Text("Linux I2C device") },
+                            label = { Text(stringResource(R.string.contrib_localization_misc_linux_i2c_device)) },
                             singleLine = true,
                             enabled = status !is DiagnosticStatus.Running,
                         )
@@ -57,11 +65,11 @@ class MainActivity : ComponentActivity() {
                             onClick = { runSelfCheck(devicePath) },
                             enabled = status !is DiagnosticStatus.Running,
                         ) {
-                            Text("Run MFi self-check")
+                            Text(stringResource(R.string.contrib_localization_misc_run_mfi_self_check))
                         }
                         Spacer(Modifier.height(4.dp))
-                        Text(status.message())
-                        Text("CH341 requires deployment-specific VID/PID configuration.")
+                        Text(status.message(LocalContext.current))
+                        Text(stringResource(R.string.contrib_localization_misc_ch341_vid_pid_note))
                     }
                 }
             }
@@ -97,22 +105,23 @@ private sealed class DiagnosticStatus {
     data class Result(val selfCheck: MfiSelfCheckResult) : DiagnosticStatus()
     data class Failure(val message: String) : DiagnosticStatus()
 
-    fun message(): String = when (this) {
-        Idle -> "Idle"
-        Running -> "Running…"
-        is Failure -> "Failed: $message"
+    fun message(context: Context): String = when (this) {
+        Idle -> context.getString(R.string.contrib_localization_misc_status_idle)
+        Running -> context.getString(R.string.contrib_localization_misc_status_running)
+        is Failure -> context.getString(R.string.contrib_localization_misc_status_failed, message)
         is Result -> {
             val chip = selfCheck.chip ?: return if (selfCheck.discovery.interrupted) {
-                "MFi scan interrupted"
+                context.getString(R.string.contrib_localization_misc_mfi_scan_interrupted)
             } else {
-                "Found: none"
+                context.getString(R.string.contrib_localization_misc_mfi_found_none)
             }
             val major = when (val result = chip.protocolMajor) {
                 is MfiProtocolMajorResult.Value -> "%d".format(result.major)
                 is MfiProtocolMajorResult.MfiFailure -> result.error.message ?: result.error.javaClass.simpleName
                 is MfiProtocolMajorResult.TransportFailure -> result.error.message ?: result.error.javaClass.simpleName
             }
-            "Found: 0x%02X; device version: 0x%02X; protocol major (raw): %s".format(
+            context.getString(
+                R.string.contrib_localization_misc_mfi_found_chip,
                 chip.address7Bit,
                 chip.deviceVersion,
                 major,

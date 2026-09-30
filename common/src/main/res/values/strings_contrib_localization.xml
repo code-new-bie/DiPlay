@@ -1,0 +1,15 @@
+<resources>
+    <string name="contrib_localization_misc_board_i2c_diagnostic">Board I2C diagnostic</string>
+    <string name="contrib_localization_misc_btn_disconnect">Disconnect</string>
+    <string name="contrib_localization_misc_ch341_vid_pid_note">CH341 requires deployment-specific VID/PID configuration.</string>
+    <string name="contrib_localization_misc_channel_carplay_connection">CarPlay connection</string>
+    <string name="contrib_localization_misc_linux_i2c_device">Linux I2C device</string>
+    <string name="contrib_localization_misc_mfi_found_chip">"Found: 0x%1$02X; device version: 0x%2$02X; protocol major (raw): %3$s"</string>
+    <string name="contrib_localization_misc_mfi_found_none">Found: none</string>
+    <string name="contrib_localization_misc_mfi_scan_interrupted">MFi scan interrupted</string>
+    <string name="contrib_localization_misc_notification_carplay_running">CarPlay connection running</string>
+    <string name="contrib_localization_misc_run_mfi_self_check">Run MFi self-check</string>
+    <string name="contrib_localization_misc_status_failed">Failed: %1$s</string>
+    <string name="contrib_localization_misc_status_idle">Idle</string>
+    <string name="contrib_localization_misc_status_running">Running…</string>
+</resources>

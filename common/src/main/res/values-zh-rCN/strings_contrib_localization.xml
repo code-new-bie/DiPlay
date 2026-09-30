@@ -1,0 +1,15 @@
+<resources>
+    <string name="contrib_localization_misc_board_i2c_diagnostic">板载 I2C 诊断</string>
+    <string name="contrib_localization_misc_btn_disconnect">断开连接</string>
+    <string name="contrib_localization_misc_ch341_vid_pid_note">CH341 需要根据具体部署配置 VID/PID。</string>
+    <string name="contrib_localization_misc_channel_carplay_connection">CarPlay 连接</string>
+    <string name="contrib_localization_misc_linux_i2c_device">Linux I2C 设备</string>
+    <string name="contrib_localization_misc_mfi_found_chip">"已找到：0x%1$02X；设备版本：0x%2$02X；协议主版本（原始）：%3$s"</string>
+    <string name="contrib_localization_misc_mfi_found_none">已找到：无</string>
+    <string name="contrib_localization_misc_mfi_scan_interrupted">MFi 扫描已中断</string>
+    <string name="contrib_localization_misc_notification_carplay_running">CarPlay 连接运行中</string>
+    <string name="contrib_localization_misc_run_mfi_self_check">运行 MFi 自检</string>
+    <string name="contrib_localization_misc_status_failed">失败：%1$s</string>
+    <string name="contrib_localization_misc_status_idle">空闲</string>
+    <string name="contrib_localization_misc_status_running">运行中…</string>
+</resources>

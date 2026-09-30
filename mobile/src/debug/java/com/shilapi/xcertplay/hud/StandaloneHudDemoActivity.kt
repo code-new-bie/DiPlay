@@ -15,10 +15,15 @@ import android.util.Log
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.shilapi.xcertplay.R
 import java.security.MessageDigest
 
 /** Parked, finite probe of stock IPC. No shell, socket, SDK privilege or helper. */
 class StandaloneHudDemoActivity : Activity() {
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(com.shilapi.xcertplay.AppLocale.wrap(newBase))
+    }
+
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var status: TextView
     private var showing = false
@@ -38,7 +43,7 @@ class StandaloneHudDemoActivity : Activity() {
                 transmit(BydStandalonePackets.guidance(if (turn == 1) 2 else 3, 0, distance, road)!!)
                 if (turn != lastTurn) Log.i(TAG, "APP_GUIDANCE uid=${Process.myUid()} turn=$turn distance=$distance")
                 lastTurn = turn
-                status.text = (if (turn == 1) "LEFT — 500 m" else "RIGHT — 800 m") + "\n" + road
+                status.text = getString(if (turn == 1) R.string.hud_demo_guidance_left else R.string.hud_demo_guidance_right, road)
                 handler.postDelayed(this, 1_000)
             } catch (error: Exception) {
                 Log.e(TAG, "Demo failed", error)
@@ -49,24 +54,27 @@ class StandaloneHudDemoActivity : Activity() {
 
     override fun onCreate(state: Bundle?) {
         super.onCreate(state)
-        status = TextView(this).apply { textSize = 32f; text = "Standalone HUD test ready" }
+        status = TextView(this).apply { textSize = 32f; text = getString(R.string.hud_demo_ready) }
         setContentView(LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(40, 40, 40, 40)
             addView(status)
             addView(TextView(this@StandaloneHudDemoActivity).apply {
-                text = "Parked test: Muscat Road / left 500 m, then Sultan Qaboos Street / right 800 m; 8 seconds each, then clear."
+                text = getString(R.string.hud_demo_description)
                 textSize = 22f
             })
             addView(Button(this@StandaloneHudDemoActivity).apply {
-                text = "Start 16-second test"
+                text = getString(R.string.hud_demo_start)
                 setOnClickListener { startDemo() }
             })
             addView(Button(this@StandaloneHudDemoActivity).apply {
-                text = "Clear HUD"
+                text = getString(R.string.hud_demo_clear)
                 setOnClickListener {
                     try { validateTarget(); showing = true; clear("button") }
-                    catch (error: Exception) { status.text = "Clear unavailable: ${error.message}" }
+                    catch (error: Exception) {
+                        Log.e(TAG, "Clear unavailable", error)
+                        status.text = getString(R.string.hud_demo_clear_unavailable)
+                    }
                 }
             })
         })
@@ -75,7 +83,7 @@ class StandaloneHudDemoActivity : Activity() {
             Log.i(TAG, "PREFLIGHT_OK uid=${Process.myUid()} stock receiver verified")
             if (intent.getBooleanExtra("run", false) && state == null) handler.post { startDemo() }
         } catch (error: Exception) {
-            status.text = "Test unavailable: ${error.message}"
+            status.text = getString(R.string.hud_demo_test_unavailable)
             Log.e(TAG, "Preflight failed", error)
         }
     }
@@ -112,7 +120,7 @@ class StandaloneHudDemoActivity : Activity() {
             handler.postDelayed(tick, 250)
         } catch (error: Exception) {
             Log.e(TAG, "Standalone preflight/start failed", error)
-            status.text = "Test unavailable: ${error.message}"
+            status.text = getString(R.string.hud_demo_test_unavailable)
             clear("start failed")
         }
     }
@@ -131,10 +139,10 @@ class StandaloneHudDemoActivity : Activity() {
                 // Broadcast delivery is not a hardware acknowledgement.
                 Log.i(TAG, "APP_CLEAR_SENT uid=${Process.myUid()} reason=$reason")
                 showing = false
-                status.text = "Clear sent — check windshield"
+                status.text = getString(R.string.hud_demo_clear_sent)
             } catch (error: Exception) {
                 Log.e(TAG, "Clear failed; retry with Clear HUD", error)
-                status.text = "Clear failed — tap Clear HUD"
+                status.text = getString(R.string.hud_demo_clear_failed)
             }
         }
 

@@ -1,0 +1,12 @@
+<resources>
+    <string name="hud_demo_ready">Standalone HUD test ready</string>
+    <string name="hud_demo_description">Parked test: Muscat Road / left 500 m, then Sultan Qaboos Street / right 800 m; 8 seconds each, then clear.</string>
+    <string name="hud_demo_start">Start 16-second test</string>
+    <string name="hud_demo_clear">Clear HUD</string>
+    <string name="hud_demo_guidance_left">LEFT — 500 m\n%1$s</string>
+    <string name="hud_demo_guidance_right">RIGHT — 800 m\n%1$s</string>
+    <string name="hud_demo_clear_unavailable">Clear unavailable</string>
+    <string name="hud_demo_test_unavailable">Test unavailable</string>
+    <string name="hud_demo_clear_sent">Clear sent — check windshield</string>
+    <string name="hud_demo_clear_failed">Clear failed — tap Clear HUD</string>
+</resources>
