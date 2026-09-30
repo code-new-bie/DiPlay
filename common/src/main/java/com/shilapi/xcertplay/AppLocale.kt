@@ -65,6 +65,13 @@ object AppLocale {
             return context
         }
         val locale = locale(preference(context)) ?: return context
+        // A configuration override pins every field it carries (day/night, density, size) for the
+        // life of the Activity, so skip it when the base configuration already matches: the head
+        // unit's own appearance changes then keep reaching this app.
+        val current = context.resources.configuration.locales[0]
+        val alreadyMatches = current.language == locale.language &&
+            (locale.country.isEmpty() || current.country == locale.country)
+        if (alreadyMatches) return context
         val configuration = Configuration(context.resources.configuration).apply {
             setLocale(locale)
             setLayoutDirection(locale)

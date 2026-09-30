@@ -335,7 +335,6 @@ class CarPlayHostActivity : ComponentActivity() {
     private var latestStage = "Preparing CarPlay"
     private var darkMode = false
     private var appearanceMonitor: CarPlayAppearanceMonitor? = null
-    private var activeAirPlaySession: AirPlaySession? = null
     private var carPlayPageVisible = false
     private val bydCallUiSuppressor by lazy { BydCallUiSuppressor(applicationContext) }
     private val activeScreenStreamTypes = mutableSetOf<Int>()
@@ -415,7 +414,8 @@ class CarPlayHostActivity : ComponentActivity() {
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         initializeSessionLog()
         darkMode = isDarkMode(resources.configuration.uiMode)
-        appearanceMonitor = CarPlayAppearanceMonitor(this, mainHandler, resources.configuration.uiMode) { night ->
+        appearanceMonitor = CarPlayAppearanceMonitor(this, mainHandler, resources.configuration.uiMode,
+            diagnostic = ::appendLog) { night ->
             if (night != darkMode) {
                 darkMode = night
                 appendLog("CarPlay appearance changed to ${if (night) "dark" else "light"}")
@@ -3163,7 +3163,6 @@ class CarPlayHostActivity : ComponentActivity() {
                     if (controllerGeneration != restartGeneration) {
                         return@runOnUiThread
                     }
-                    activeAirPlaySession = session
                     updateBydCallUi()
                     CarPlayBackgroundSession.active = true
                     reconnectAttempts = 0
@@ -3175,7 +3174,6 @@ class CarPlayHostActivity : ComponentActivity() {
 
             override fun onSessionEnded(session: AirPlaySession) {
                 runOnUiThread {
-                    if (activeAirPlaySession === session) activeAirPlaySession = null
                     updateBydCallUi()
                     CarPlayBackgroundSession.active = false
                     if (menuOpen || controllerGeneration != restartGeneration) {
@@ -3261,6 +3259,7 @@ class CarPlayHostActivity : ComponentActivity() {
             createSessionListener(generation),
             createStatusReporter(generation),
         )
+        syncAirPlayDarkMode()
         snapshot.sink.setScreenStreamActiveChangedListener { type, active ->
             onScreenStreamStateChanged(restartGeneration, type, active)
         }
@@ -3377,18 +3376,26 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     private fun syncAirPlayDarkMode() {
-        val session = activeAirPlaySession ?: return
+        val target = controller ?: return
         val night = darkMode
-        airPlayCommandExecutor.execute {
-            try {
-                val sent = session.setNightMode(night)
-                Log.i(
-                    TAG,
-                    "AirPlay dark mode=${if (night) "dark" else "light"} eventChannelReady=$sent",
-                )
-            } catch (error: Throwable) {
-                Log.w(TAG, "Could not send AirPlay dark mode update", error)
+        val diagnosticLog = sessionLog
+        try {
+            airPlayCommandExecutor.execute {
+                if (target.isClosed()) return@execute
+                try {
+                    val sent = target.setNightMode(night)
+                    val message = "CarPlay appearance requested=${if (night) "dark" else "light"} " +
+                        "connected=${target.hasActiveAirPlaySession()} eventChannelReady=$sent"
+                    Log.i(TAG, message)
+                    diagnosticLog?.append(formattedLogLine(message, System.currentTimeMillis()))
+                } catch (error: Exception) {
+                    Log.w(TAG, "Could not send AirPlay dark mode update", error)
+                    diagnosticLog?.append(formattedLogLine(
+                        "CarPlay appearance send failed: ${error.javaClass.simpleName}", System.currentTimeMillis()))
+                }
             }
+        } catch (_: java.util.concurrent.RejectedExecutionException) {
+            // A stopped Activity no longer owns the command executor.
         }
     }
 

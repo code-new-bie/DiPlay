@@ -329,6 +329,12 @@ class CarPlayController(
     /** UI-only integrations can also recognise a session adopted from the background service. */
     fun hasActiveAirPlaySession(): Boolean = !closed && activeSession != null
 
+    /** Theme updates must use the live session, including one adopted by a new Activity. */
+    fun setNightMode(night: Boolean): Boolean {
+        if (closed) return false
+        return activeSession?.setNightMode(night) ?: false
+    }
+
     fun hasActiveAirPlayAttachment(): Boolean = synchronized(lifecycleLock) {
         !closed && vpnService?.isAttached() == true
     }
