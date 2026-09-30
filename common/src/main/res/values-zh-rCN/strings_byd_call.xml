@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="byd_settings">比亚迪设置</string>
+    <string name="byd_hide_stock_call_ui">隐藏原车通话弹窗（实验性）</string>
+    <string name="byd_hide_stock_call_ui_description">CarPlay 已连接且页面显示时，通过原车 HiCar 接口关闭通话弹窗，无需 ADB。弹窗可能短暂出现后关闭；关闭此开关可恢复原车通话界面。</string>
+</resources>

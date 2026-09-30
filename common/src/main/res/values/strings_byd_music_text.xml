@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="byd_forward_music_text">Forward instrument music text (experimental)</string>
+    <string name="byd_forward_music_text_description">On compatible Android 10 BYD head units, forward the connected phone’s Bluetooth song text while CarPlay plays music. Lyrics appear only if the music app updates them over Bluetooth. Keeps steering-wheel controls and requires no ADB. Connect only one phone to Bluetooth.</string>
+</resources>

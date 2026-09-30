@@ -173,7 +173,8 @@ class WifiP2pGroupManager(
                         throw IOException("Could not record Wi-Fi P2P group ownership")
                     }
                     val request = CreateRequest()
-                    requestedName = config?.networkName
+                    // WifiP2pConfig.getNetworkName() is API 30; creation also supports API 29.
+                    requestedName = if (config != null) credentials.ssid else null
                     synchronized(stateLock) {
                         ensureStartActiveLocked(attempt)
                         attempt.request = request

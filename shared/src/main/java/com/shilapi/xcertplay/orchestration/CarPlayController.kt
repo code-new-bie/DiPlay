@@ -198,6 +198,8 @@ class CarPlayController(
 
     /** Told when the iPhone starts or stops playing media; may run on any thread. */
     @Volatile var playbackListener: ((Boolean) -> Unit)? = null
+    /** Observational media integration; does not participate in connection setup or teardown. */
+    @Volatile var mediaConnectionListener: ((Boolean) -> Unit)? = null
     @Volatile private var hotspot: WirelessHotspotManager? = null
     @Volatile private var bonjour: CarPlayBonjour? = null
     @Volatile private var bluetoothSocket: BluetoothSocket? = null
@@ -235,6 +237,7 @@ class CarPlayController(
         override fun onSessionActive(session: AirPlaySession) {
             if (activeSession !== session) BydNavigationOutputs.start(appContext)
             activeSession = session
+            notifyMediaConnection(true)
             debugLog(
                 "AirPlay session active controller=${session.controllerId ?: "unknown"} " +
                     "peer=${session.host}",
@@ -245,6 +248,7 @@ class CarPlayController(
         override fun onSessionEnded(session: AirPlaySession) {
             if (activeSession === session) {
                 activeSession = null
+                notifyMediaConnection(false)
                 BydNavigationOutputs.endNow()
                 synchronized(playbackStatus) { playbackStatus.clear() }?.let { playing -> playbackListener?.invoke(playing) }
             }
@@ -316,6 +320,14 @@ class CarPlayController(
     }
 
     fun isClosed(): Boolean = closed
+
+    private fun notifyMediaConnection(connected: Boolean) {
+        runCatching { mediaConnectionListener?.invoke(connected) }
+            .onFailure { debugLog("Media observer failed: ${it.javaClass.simpleName}") }
+    }
+
+    /** UI-only integrations can also recognise a session adopted from the background service. */
+    fun hasActiveAirPlaySession(): Boolean = !closed && activeSession != null
 
     fun hasActiveAirPlayAttachment(): Boolean = synchronized(lifecycleLock) {
         !closed && vpnService?.isAttached() == true

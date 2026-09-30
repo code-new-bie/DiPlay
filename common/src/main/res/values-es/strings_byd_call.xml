@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="byd_settings">Ajustes BYD</string>
+    <string name="byd_hide_stock_call_ui">Ocultar ventanas de llamadas del coche (experimental)</string>
+    <string name="byd_hide_stock_call_ui_description">Con CarPlay conectado y visible, usa la interfaz HiCar del coche para cerrar las ventanas de llamadas. No requiere ADB. Una ventana puede aparecer brevemente antes de cerrarse. Desactiva esta opción para restaurar la interfaz de llamadas del coche.</string>
+</resources>

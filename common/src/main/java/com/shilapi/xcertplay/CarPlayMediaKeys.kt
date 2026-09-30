@@ -12,6 +12,7 @@ import android.os.Looper
 import android.util.Log
 import android.view.KeyEvent
 import com.shilapi.xcertplay.airplay.CarPlayMediaButton
+import com.shilapi.xcertplay.hud.BydMusicTextRelay
 import com.shilapi.xcertplay.orchestration.CarPlayController
 
 /**
@@ -32,14 +33,40 @@ internal object CarPlayMediaKeys {
     private var session: MediaSession? = null
     private var focusRequest: AudioFocusRequest? = null
     private var focusHeld = false
+    // Track transient focus separately so text never overwrites calls/Siri/navigation prompts.
+    private var textFocusHeld = false
+    private var mediaActive = false
+    private var iphonePlaying: Boolean? = null
+    private var textRelay: BydMusicTextRelay? = null
     private var appContext: Context? = null
 
     @Synchronized
-    fun attach(context: Context, next: CarPlayController) {
+    fun attach(context: Context, next: CarPlayController, expectedBluetoothAddress: String?, diagnostic: (String) -> Unit) {
         if (controller !== next) releaseLocked()
         appContext = context.applicationContext
         controller = next
-        next.playbackListener = ::onIphonePlaying
+        if (textRelay == null) textRelay = BydMusicTextRelay.create(context, expectedBluetoothAddress, diagnostic)
+        next.playbackListener = { playing ->
+            mainHandler.post { synchronized(this) {
+                if (controller !== next) return@synchronized
+                iphonePlaying = playing
+                if (playing) regainFocusLocked()
+                updateTextLocked()
+            } }
+        }
+        next.mediaConnectionListener = { connected ->
+            mainHandler.post { synchronized(this) {
+                if (controller !== next) return@synchronized
+                if (!connected) {
+                    mediaActive = false
+                    iphonePlaying = null
+                    textRelay?.updateUsage(connected = false, playing = false, focusHeld = false)
+                } else {
+                    updateTextLocked()
+                }
+            } }
+        }
+        updateTextLocked()
     }
 
     /** Ends key handling for [expected]; a newer controller's state is left alone. */
@@ -47,6 +74,7 @@ internal object CarPlayMediaKeys {
     fun detach(expected: CarPlayController?) {
         if (expected == null || controller !== expected) return
         expected.playbackListener = null
+        expected.mediaConnectionListener = null
         controller = null
         releaseLocked()
     }
@@ -56,9 +84,12 @@ internal object CarPlayMediaKeys {
         mainHandler.post { synchronized(this) { updateLocked(active) } }
     }
 
-    /** The iPhone started or stopped playing; may run on any thread. */
-    fun onIphonePlaying(playing: Boolean) {
-        if (playing) mainHandler.post { synchronized(this) { regainFocusLocked() } }
+    private fun updateTextLocked() {
+        textRelay?.updateUsage(
+            connected = controller?.hasActiveAirPlaySession() == true,
+            playing = mediaActive && iphonePlaying != false,
+            focusHeld = textFocusHeld,
+        )
     }
 
     // Another car app (its own Spotify, the radio) took audio focus and with it the steering-wheel
@@ -69,12 +100,14 @@ internal object CarPlayMediaKeys {
         if (focusHeld) return
         val audio = appContext?.getSystemService(AudioManager::class.java) ?: return
         focusHeld = audio.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        textFocusHeld = focusHeld
         Log.i(TAG, "audio focus regained=$focusHeld")
     }
 
     private fun updateLocked(active: Boolean) {
         val context = appContext ?: return
         if (controller == null) return
+        mediaActive = active
         if (active && session == null) start(context) else if (active) regainFocusLocked()
         session?.setPlaybackState(
             PlaybackState.Builder()
@@ -82,9 +115,11 @@ internal object CarPlayMediaKeys {
                 .setState(if (active) PlaybackState.STATE_PLAYING else PlaybackState.STATE_PAUSED, PlaybackState.PLAYBACK_POSITION_UNKNOWN, 1f)
                 .build(),
         )
+        updateTextLocked()
     }
 
     private fun start(context: Context) {
+        val owner = controller
         val audio = context.getSystemService(AudioManager::class.java)
         val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
             .setAudioAttributes(
@@ -96,12 +131,18 @@ internal object CarPlayMediaKeys {
             .setOnAudioFocusChangeListener({ change ->
                 Log.i(TAG, "audio focus change=$change")
                 // Only a permanent loss moves the car's media keys elsewhere; transient losses come back.
-                if (change == AudioManager.AUDIOFOCUS_LOSS) synchronized(this) { focusHeld = false }
+                synchronized(this) {
+                    if (controller !== owner) return@synchronized
+                    if (change == AudioManager.AUDIOFOCUS_LOSS) focusHeld = false
+                    textFocusHeld = change == AudioManager.AUDIOFOCUS_GAIN
+                    updateTextLocked()
+                }
             }, mainHandler)
             .build()
         val granted = audio?.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         focusRequest = request
         focusHeld = granted
+        textFocusHeld = granted
         session = MediaSession(context, "DiPlay CarPlay").apply {
             setCallback(callback, mainHandler)
             isActive = true
@@ -110,6 +151,11 @@ internal object CarPlayMediaKeys {
     }
 
     private fun releaseLocked() {
+        textRelay?.close()
+        textRelay = null
+        textFocusHeld = false
+        mediaActive = false
+        iphonePlaying = null
         session?.let {
             it.isActive = false
             it.release()

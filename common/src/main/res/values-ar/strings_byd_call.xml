@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="byd_settings">إعدادات BYD</string>
+    <string name="byd_hide_stock_call_ui">إخفاء نوافذ المكالمات الأصلية (تجريبي)</string>
+    <string name="byd_hide_stock_call_ui_description">عندما يكون CarPlay متصلاً ومعروضاً، تُستخدم واجهة HiCar الأصلية لإغلاق نوافذ المكالمات. لا يتطلب ADB. قد تظهر النافذة للحظة قبل إغلاقها. أوقف الخيار لاستعادة واجهة المكالمات الأصلية.</string>
+</resources>

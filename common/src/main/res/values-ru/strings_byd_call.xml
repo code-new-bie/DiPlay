@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="byd_settings">Настройки BYD</string>
+    <string name="byd_hide_stock_call_ui">Скрывать штатные окна звонков (экспериментально)</string>
+    <string name="byd_hide_stock_call_ui_description">Когда CarPlay подключён и отображается, штатный интерфейс HiCar закрывает окна звонков. ADB не требуется. Окно может ненадолго появиться перед закрытием. Отключите настройку, чтобы восстановить штатный интерфейс звонков.</string>
+</resources>

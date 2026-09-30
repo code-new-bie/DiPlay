@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="byd_forward_music_text">إرسال نص الموسيقى إلى لوحة العدادات (تجريبي)</string>
+    <string name="byd_forward_music_text_description">في وحدات BYD المتوافقة مع Android 10، يُرسل نص الموسيقى الذي يوفّره الهاتف عبر Bluetooth أثناء تشغيل الموسيقى في CarPlay. تظهر الكلمات فقط إذا حدّثها تطبيق الموسيقى عبر Bluetooth. تبقى أزرار المقود فعّالة ولا يلزم ADB. صِل هاتفاً واحداً فقط عبر Bluetooth.</string>
+</resources>

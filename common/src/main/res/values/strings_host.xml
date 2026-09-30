@@ -68,8 +68,6 @@
     <string name="host_auto_start_desc">Start CarPlay automatically after device boot</string>
 
     <!-- Audio section -->
-    <string name="host_audio_focus_label">Audio focus</string>
-    <string name="host_audio_focus_desc">Navigation prompts lower media volume while they play</string>
     <string name="host_adv_audio_label">Advanced audio channel mapping</string>
     <string name="host_adv_audio_desc">Route AAOS audio buses by CarPlay audio type</string>
 
@@ -192,7 +190,6 @@
     <string name="host_prev_fullscreen">"Fullscreen: "</string>
     <string name="host_prev_transport">"Video transport: "</string>
     <string name="host_prev_loc">"Location reporting: "</string>
-    <string name="host_prev_audio_focus">"Audio focus: "</string>
     <string name="host_prev_acm">"Audio channel mapping: "</string>
     <string name="host_acm_aaos">AAOS buses</string>
     <string name="host_acm_mobile">Mobile compatible</string>

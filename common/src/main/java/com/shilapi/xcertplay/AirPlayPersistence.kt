@@ -39,7 +39,6 @@ object AirPlayPersistence {
     private const val KEY_HEVC_ENABLED = "hevc_enabled"
     private const val KEY_HEVC_SOFTWARE_DECODER = "hevc_software_decoder"
     private const val KEY_ADVANCED_AUDIO_CHANNEL_MAPPING = "advanced_audio_channel_mapping"
-    private const val KEY_AUDIO_FOCUS_ENABLED = "audio_focus_enabled"
     private const val KEY_MEDIA_AUDIO_CHANNEL = "media_audio_channel"
     private const val KEY_NAVIGATION_AUDIO_CHANNEL = "navigation_audio_channel"
     private const val KEY_NAVIGATION_STREAM_TYPE = "navigation_stream_type"
@@ -147,20 +146,6 @@ object AirPlayPersistence {
             .putInt(KEY_NAVIGATION_STREAM_TYPE, streamType)
             .apply()
     }
-    /**
-     * Disabled by default: several head units mute streams that interact with their focus
-     * stack, so focus participation stays opt-in.
-     */
-    fun loadAudioFocusEnabled(context: Context): Boolean =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_AUDIO_FOCUS_ENABLED, false)
-
-    fun saveAudioFocusEnabled(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putBoolean(KEY_AUDIO_FOCUS_ENABLED, enabled)
-            .apply()
-    }
-
     /** 0 selects usage-based routing; 1-40 selects a head-unit-defined legacy stream. */
     fun loadMediaAudioChannel(context: Context): Int =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

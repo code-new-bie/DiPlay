@@ -68,8 +68,6 @@
     <string name="host_auto_start_desc">设备开机后自动启动 CarPlay</string>
 
     <!-- 音频分区 -->
-    <string name="host_audio_focus_label">音频焦点</string>
-    <string name="host_audio_focus_desc">导航播报时自动压低媒体音量</string>
     <string name="host_adv_audio_label">高级音频声道映射</string>
     <string name="host_adv_audio_desc">按 CarPlay 音频类型分流 AAOS 音频总线</string>
 
@@ -192,7 +190,6 @@
     <string name="host_prev_fullscreen">"全屏："</string>
     <string name="host_prev_transport">"视频传输："</string>
     <string name="host_prev_loc">"位置上报："</string>
-    <string name="host_prev_audio_focus">"音频焦点："</string>
     <string name="host_prev_acm">"音频声道映射："</string>
     <string name="host_acm_aaos">AAOS 音频总线</string>
     <string name="host_acm_mobile">手机兼容模式</string>
