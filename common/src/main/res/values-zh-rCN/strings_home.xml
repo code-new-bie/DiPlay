@@ -37,7 +37,6 @@
     <string name="home_usb_hint">将 iPhone 插入车载 USB 数据接口。\n收到询问时，请在 iPhone 上允许 CarPlay。</string>
     <string name="home_btn_settings">设置</string>
     <string name="home_settings_teaser">让 DiPlay 更贴合你的车。</string>
-    <string name="home_public_preview">"公开预览  ·  %1$s"</string>
 
     <!-- Settings page -->
     <string name="home_settings_title">你的驾驶，你做主。</string>

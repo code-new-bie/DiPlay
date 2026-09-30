@@ -143,12 +143,14 @@ class CarPlayController(
     private val savePairRecord: (LockdownPairRecord) -> Unit = {},
     private val clearPairRecord: () -> Unit = {},
     private val locationProvider: Iap2LocationProvider? = null,
+    private val vehicleStatusProvider: com.shilapi.xcertplay.transport.VehicleStatusProvider? = null,
 ) : Closeable {
     init {
         require(!config.locationReportingEnabled || locationProvider != null) {
             "A location provider is required when location reporting is enabled"
         }
         BydNavigationOutputs.start(context.applicationContext)
+        BydNavigationOutputs.setClusterStreamControl(::applyClusterUi)
     }
 
     private enum class Phase { IDLE, MFI, WIRELESS, IPHONE, REENUMERATION, DATAPATHS, CONTROL }
@@ -189,6 +191,13 @@ class CarPlayController(
     @Volatile private var mux: Iap2UsbMuxHost? = null
     @Volatile private var csm: Iap2Session? = null
     @Volatile private var activeSession: AirPlaySession? = null
+    private val clusterUiLock = Any()
+    private var clusterUiStream: Pair<AirPlaySession, Int>? = null
+    private var clusterUiShown = true
+    private val playbackStatus = com.shilapi.xcertplay.media.CarPlayPlaybackStatus()
+
+    /** Told when the iPhone starts or stops playing media; may run on any thread. */
+    @Volatile var playbackListener: ((Boolean) -> Unit)? = null
     @Volatile private var hotspot: WirelessHotspotManager? = null
     @Volatile private var bonjour: CarPlayBonjour? = null
     @Volatile private var bluetoothSocket: BluetoothSocket? = null
@@ -237,6 +246,7 @@ class CarPlayController(
             if (activeSession === session) {
                 activeSession = null
                 BydNavigationOutputs.endNow()
+                synchronized(playbackStatus) { playbackStatus.clear() }?.let { playing -> playbackListener?.invoke(playing) }
             }
             debugLog("AirPlay session ended peer=${session.host}")
             uiListener?.onSessionEnded(session)
@@ -352,12 +362,37 @@ class CarPlayController(
         }
     }
 
+    /** Sends one CarPlay media-button press (an [com.shilapi.xcertplay.airplay.AirPlayHid] media index). */
+    /** Opens Siri on the iPhone, as the car's voice button does in CarPlay. */
+    fun requestSiri(): Boolean {
+        if (closed) return false
+        val session = activeSession ?: return false
+        return try {
+            touchExecutor.execute { session.invokeSiri() }
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    fun sendMediaButton(index: Int): Boolean {
+        if (closed) return false
+        val session = activeSession ?: return false
+        return try {
+            touchExecutor.execute { session.sendMedia(index) }
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     override fun close() {
         synchronized(this) {
             if (closed) return
             closed = true
         }
         BydNavigationOutputs.endNow()
+        BydNavigationOutputs.clearClusterStreamControl(::applyClusterUi)
         closeReceivers()
         availabilityPollGeneration.incrementAndGet()
         wirelessGeneration.incrementAndGet()
@@ -402,6 +437,21 @@ class CarPlayController(
         }
     }
 
+    // Each new cluster stream starts with the map drawn (its initialURL); send only real changes.
+    private fun applyClusterUi(shown: Boolean) = synchronized(clusterUiLock) {
+        val session = activeSession ?: return@synchronized
+        val stream = session.clusterStream.takeIf { it > 0 } ?: return@synchronized
+        if (clusterUiStream != session to stream) {
+            clusterUiStream = session to stream
+            clusterUiShown = true
+        }
+        if (shown == clusterUiShown) return@synchronized
+        if (session.setClusterUiShown(shown)) {
+            clusterUiShown = shown
+            debugLog("Cluster map: ${if (shown) "showUI, the cluster shows the map" else "stopUI, the cluster hides the map"}")
+        }
+    }
+
     /** Waits for USB, iAP2, MFi and VPN teardown; intended for a non-main lifecycle thread. */
     fun awaitClosed(timeoutMillis: Long): Boolean {
         require(timeoutMillis >= 0) { "timeoutMillis must not be negative" }
@@ -416,6 +466,7 @@ class CarPlayController(
     // HUD (SOME/IP) and cluster (AMap broadcast) keep separate state so one failing cannot stall the other.
     private fun onRouteFrame(frame: com.shilapi.xcertplay.iap2.wire.Iap2Frame) {
         BydNavigationOutputs.onFrame(frame)
+        synchronized(playbackStatus) { playbackStatus.accept(frame) }?.let { playing -> playbackListener?.invoke(playing) }
     }
 
     private fun startMfi() {
@@ -948,6 +999,7 @@ class CarPlayController(
                 endpoint = endpoint,
                 timeoutMillis = controlLoopTimeoutMillis(),
                 locationProvider = locationProvider,
+                vehicleStatusProvider = vehicleStatusProvider,
                 onIncoming = ::onRouteFrame,
                 onProgress = ::debugLog,
             )
@@ -1034,6 +1086,7 @@ class CarPlayController(
                         endpoint = endpoint,
                         timeoutMillis = Iap2WirelessControlClient.NO_TIMEOUT_MILLIS,
                         locationProvider = locationProvider,
+                        vehicleStatusProvider = vehicleStatusProvider,
                         onReady = {
                             onWirelessTunnelReady(generation)
                         },
@@ -1488,6 +1541,7 @@ class CarPlayController(
                 availableCurrentMilliAmps = config.availableCurrentMilliAmps,
                 timeoutMillis = controlLoopTimeoutMillis(),
                 locationProvider = locationProvider,
+                vehicleStatusProvider = vehicleStatusProvider,
                 onIncoming = ::onRouteFrame,
                 onProgress = { message -> debugLog("wired $message") },
             )

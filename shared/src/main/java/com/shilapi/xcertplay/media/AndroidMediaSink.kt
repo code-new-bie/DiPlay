@@ -48,9 +48,12 @@ class AndroidMediaSink(
     private val mediaChannel: Int = 0,
     private val navigationChannel: Int = 0,
     context: Context? = null,
+    private val navigationStreamType: Int = AudioChannelMapper.DEFAULT_NAVIGATION_STREAM_TYPE,
     onScreenStreamActiveChanged: ((Int, Boolean) -> Unit)? = null,
     private val mediaBufferMillis: Int = MediaAudioBuffer.DEFAULT_MILLIS,
     private val onAudioDiagnostic: (String) -> Unit = {},
+    /** True while any music ("media") audio stream is running; called from media threads. */
+    private val onMediaAudioChanged: (Boolean) -> Unit = {},
 ) : MediaSink {
     private val appContext = context?.applicationContext
     private val screenStateLock = Any()
@@ -59,6 +62,7 @@ class AndroidMediaSink(
     @Volatile private var screenStreamActiveChanged = onScreenStreamActiveChanged
     private val surfaces = ConcurrentHashMap<Int, Surface>()
     private val videoDecoders = ConcurrentHashMap<Int, VideoDecoder>()
+    private val mediaAudioTypes = mutableSetOf<AudioStreamId>()
     private val audioRenderers = ConcurrentHashMap<AudioStreamId, AudioRenderer>()
     private val microphoneUplinks = ConcurrentHashMap<AudioStreamId, MicrophoneUplink>()
     private val pendingVideoCodec = ConcurrentHashMap<Int, VideoCodec>()
@@ -132,6 +136,7 @@ class AndroidMediaSink(
 
     override fun onAudioStarted(id: AudioStreamId, format: AudioFormat, firstSample: Int) {
         audioRenderer(id, format).start()
+        if (format.audioType == "media") updateMediaAudio(id, true)
     }
 
     override fun onAudioRtp(id: AudioStreamId, format: AudioFormat, rtp: ByteArray, sample: Int) {
@@ -140,6 +145,16 @@ class AndroidMediaSink(
 
     override fun onAudioStopped(id: AudioStreamId) {
         audioRenderers.remove(id)?.close()
+        updateMediaAudio(id, false)
+    }
+
+    private fun updateMediaAudio(id: AudioStreamId, active: Boolean) {
+        val (before, after) = synchronized(mediaAudioTypes) {
+            val before = mediaAudioTypes.isNotEmpty()
+            if (active) mediaAudioTypes.add(id) else mediaAudioTypes.remove(id)
+            before to mediaAudioTypes.isNotEmpty()
+        }
+        if (before != after) onMediaAudioChanged(after)
     }
 
     override fun onMicrophoneStarted(id: AudioStreamId, config: MicrophoneConfig) {
@@ -164,6 +179,8 @@ class AndroidMediaSink(
         recoveryExecutor.shutdownNow()
         audioRenderers.values.forEach(AudioRenderer::close)
         audioRenderers.clear()
+        val hadMedia = synchronized(mediaAudioTypes) { mediaAudioTypes.isNotEmpty().also { mediaAudioTypes.clear() } }
+        if (hadMedia) onMediaAudioChanged(false)
         microphoneUplinks.values.forEach(MicrophoneUplink::close)
         microphoneUplinks.clear()
     }
@@ -193,6 +210,7 @@ class AndroidMediaSink(
             mediaChannel,
             navigationChannel,
             appContext,
+            navigationStreamType,
             mediaBufferMillis,
             onAudioDiagnostic,
         ).also { audioRenderers[id] = it }
@@ -523,6 +541,7 @@ private class AudioRenderer(
     private val mediaChannel: Int,
     private val navigationChannel: Int,
     context: Context?,
+    private val navigationStreamType: Int,
     private val mediaBufferMillis: Int,
     private val report: (String) -> Unit,
 ) : Closeable {
@@ -685,30 +704,54 @@ private class AudioRenderer(
             format.sampleRate, format.channels, minBuffer, mediaBufferMillis)
         val frameBytes = if (format.channels >= 2) 4 else 2
         bytesPerSecond = format.sampleRate * frameBytes
-        val built = AudioTrack.Builder()
-            .setAudioAttributes(attributes)
-            .setAudioFormat(
-                AndroidAudioFormat.Builder()
-                    .setEncoding(encoding)
-                    .setSampleRate(format.sampleRate)
-                    .setChannelMask(channelMask)
-                    .build(),
+        val built: AudioTrack
+        var routeLabel: String
+        if (streamOverride == 0) {
+            val attributes = audioAttributesFor(selection)
+            routeLabel = "usage"
+            built = AudioTrack.Builder()
+                .setAudioAttributes(attributes)
+                .setAudioFormat(pcmFormat(encoding, channelMask))
+                .setTransferMode(AudioTrack.MODE_STREAM)
+                .setBufferSizeInBytes(plan.trackBufferBytes)
+                .build()
+        } else {
+            val streamType = streamOverride
+            routeLabel = "streamType=$streamType"
+            built = LegacyAudioFallback.build(
+                createLegacy = {
+                    AudioTrack(streamType, format.sampleRate, channelMask, encoding,
+                        plan.trackBufferBytes, AudioTrack.MODE_STREAM)
+                },
+                isInitialized = { it.state == AudioTrack.STATE_INITIALIZED },
+                release = { it.release() },
+                createFallback = {
+                    routeLabel = "streamType=$streamType(fallback=usage)"
+                    Log.w(TAG, "streamType=$streamType rejected by this ROM; falling back to usage-based track")
+                    AudioTrack.Builder()
+                        .setAudioAttributes(audioAttributesFor(selection))
+                        .setAudioFormat(pcmFormat(encoding, channelMask))
+                        .setTransferMode(AudioTrack.MODE_STREAM)
+                        .setBufferSizeInBytes(plan.trackBufferBytes)
+                        .build()
+                },
             )
-            .setBufferSizeInBytes(plan.trackBufferBytes)
-            .setTransferMode(AudioTrack.MODE_STREAM)
-            .build()
+        }
         track = built
+        trackAttributes = built.audioAttributes
         val capacityBytes = built.bufferSizeInFrames * frameBytes
         startThresholdBytes = MediaAudioBuffer.startBytesFor(plan.startBytes, capacityBytes, PREBUFFER_WRITE_CHUNK_BYTES)
         report("Audio: ready audioType=${format.audioType} codec=${format.codec} " +
             "rate=${format.sampleRate} channels=${format.channels} " +
+            "route=$routeLabel " +
             "bufferMs=${capacityBytes * 1000L / bytesPerSecond} startMs=${startThresholdBytes * 1000L / bytesPerSecond}")
         Log.i(
             TAG,
             "audio track prepared type=${format.payloadType} audioType=${format.audioType} " +
                 "codec=${format.codec} " +
                 "rate=${format.sampleRate} channels=${format.channels} " +
-                "buffer=${capacityBytes * 1000L / bytesPerSecond}ms start=${startThresholdBytes * 1000L / bytesPerSecond}ms",
+                "route=$routeLabel " +
+                "buffer=${capacityBytes * 1000L / bytesPerSecond}ms start=${startThresholdBytes * 1000L / bytesPerSecond}",
         )
         Log.i(
             TAG,
@@ -805,6 +848,26 @@ private class AudioRenderer(
         val active = track ?: return
         val result = active.setStereoVolume(volume, volume)
         Log.i(TAG, "audio focus volume type=${format.payloadType} volume=$volume result=$result")
+    }
+
+    private fun pcmFormat(encoding: Int, channelMask: Int) = AndroidAudioFormat.Builder()
+        .setSampleRate(format.sampleRate)
+        .setChannelMask(channelMask)
+        .setEncoding(encoding)
+        .build()
+
+    private fun streamType(): Int {
+        val mode = if (advancedAudioChannelMapping) {
+            AudioChannelMappingMode.AUTOMOTIVE_BUS
+        } else {
+            AudioChannelMappingMode.MOBILE_COMPATIBLE
+        }
+        return AudioChannelMapper.map(
+            audioType = format.audioType,
+            payloadType = format.payloadType,
+            mode = mode,
+            navigationStreamType = navigationStreamType,
+        ).streamType
     }
 
     private fun aacAudioSpecificConfig(): ByteArray {

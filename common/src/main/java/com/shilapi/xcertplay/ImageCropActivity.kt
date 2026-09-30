@@ -1,6 +1,7 @@
 package com.shilapi.xcertplay
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -33,6 +34,10 @@ class ImageCropActivity : Activity() {
     private lateinit var cropView: SquareCropView
     private lateinit var statusView: TextView
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLocale.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val uri = intent.data
@@ -47,7 +52,7 @@ class ImageCropActivity : Activity() {
             textSize = 16f
             gravity = Gravity.CENTER
             setPadding(dp(12), dp(8), dp(12), dp(8))
-            text = getString(R.string.misc_loading_image)
+            text = getString(R.string.loading_image)
         }
 
         val controls = LinearLayout(this).apply {
@@ -57,7 +62,7 @@ class ImageCropActivity : Activity() {
         }
         controls.addView(
             Button(this).apply {
-                text = getString(R.string.misc_cancel)
+                text = getString(R.string.cancel)
                 isAllCaps = false
                 setOnClickListener {
                     setResult(RESULT_CANCELED)
@@ -68,7 +73,7 @@ class ImageCropActivity : Activity() {
         )
         controls.addView(
             Button(this).apply {
-                text = getString(R.string.misc_save_1_1)
+                text = getString(R.string.save_1_1)
                 isAllCaps = false
                 setOnClickListener { saveCrop() }
             },
@@ -117,10 +122,10 @@ class ImageCropActivity : Activity() {
                     return@runOnUiThread
                 }
                 if (bitmap == null) {
-                    statusView.text = getString(R.string.misc_could_not_decode_image)
+                    statusView.text = getString(R.string.could_not_decode_image)
                 } else {
                     cropView.setBitmap(bitmap)
-                    statusView.text = getString(R.string.misc_drag_pinch_hint)
+                    statusView.text = getString(R.string.drag_to_move_pinch_to_zoom)
                 }
             }
         }
@@ -134,13 +139,13 @@ class ImageCropActivity : Activity() {
 
     private fun saveCrop() {
         val cropped = cropView.cropToSquare() ?: run {
-            statusView.text = getString(R.string.misc_image_not_ready)
+            statusView.text = getString(R.string.image_is_not_ready)
             return
         }
         val encoded = ByteArrayOutputStream().use { output ->
             if (!cropped.compress(Bitmap.CompressFormat.PNG, 100, output)) {
                 cropped.recycle()
-                statusView.text = getString(R.string.misc_could_not_encode_image)
+                statusView.text = getString(R.string.could_not_encode_image)
                 return
             }
             cropped.recycle()
@@ -154,7 +159,7 @@ class ImageCropActivity : Activity() {
             )
             finish()
         } catch (_: Exception) {
-            statusView.text = getString(R.string.misc_could_not_save_image)
+            statusView.text = getString(R.string.could_not_save_image)
         }
     }
 

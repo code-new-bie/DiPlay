@@ -1,3 +1,13 @@
+# DiPlay 0.2.7 — 2026-09-29
+
+- App interface in English, Simplified Chinese, Arabic, Russian and Spanish; synchronized Android app-language settings.
+- Steering-wheel media controls and long-press Siri on supported BYD firmware while CarPlay is on screen.
+- Dashboard display choices: map, turn card, or both; corrected dashboard keyframe recovery.
+- Optional ADB feature on supported DiLink 5.0: pause the dashboard map stream when its display mode hides the map.
+- Optional ADB battery reporting for Apple Maps, with warning threshold, charging-connector selection and a checked reconnect action.
+- Audio playback reliability fixes and clearer dashboard settings.
+- Clarify the BYD-only support scope on the README and all five website editions.
+
 # Audio channel separation and Simplified Chinese localization — 2026-09-26
 
 - Keyed audio streams by (stream type, CarPlay audio type) end to end: CarPlayMediaEngine and

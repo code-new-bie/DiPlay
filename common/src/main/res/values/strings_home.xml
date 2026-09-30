@@ -37,7 +37,6 @@
     <string name="home_usb_hint">Plug your iPhone into a USB data port.\nAllow CarPlay when your iPhone asks.</string>
     <string name="home_btn_settings">Settings</string>
     <string name="home_settings_teaser">Make DiPlay feel right for your car.</string>
-    <string name="home_public_preview">"PUBLIC PREVIEW  ·  %1$s"</string>
 
     <!-- Settings page -->
     <string name="home_settings_title">Your drive, your way.</string>
