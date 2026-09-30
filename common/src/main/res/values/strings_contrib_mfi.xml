@@ -1,0 +1,27 @@
+<resources>
+    <string name="contrib_mfi_home_choice_summary">%1$s · %2$s</string>
+    <string name="contrib_mfi_home_mfi_i2c">I²C chip</string>
+    <string name="contrib_mfi_home_mfi_i2c_device">I²C device path</string>
+    <string name="contrib_mfi_home_mfi_i2c_note">Reads the MFi chip at the specified device path. Device access is required.</string>
+    <string name="contrib_mfi_home_mfi_i2c_path">I²C device · %1$s</string>
+    <string name="contrib_mfi_home_mfi_invalid_i2c_path">Enter a valid I²C device path.</string>
+    <string name="contrib_mfi_home_mfi_invalid_server">Use an http:// or https:// server address.</string>
+    <string name="contrib_mfi_home_mfi_invalid_token">The token contains an invalid character.</string>
+    <string name="contrib_mfi_home_mfi_local">Local offline</string>
+    <string name="contrib_mfi_home_mfi_local_note">Uses the local identity installed with this app.</string>
+    <string name="contrib_mfi_home_mfi_local_unavailable">No local authentication identity is installed.</string>
+    <string name="contrib_mfi_home_mfi_method">Authentication method</string>
+    <string name="contrib_mfi_home_mfi_not_set">not set</string>
+    <string name="contrib_mfi_home_mfi_remote">Remote service</string>
+    <string name="contrib_mfi_home_mfi_remote_note">Uses your configured authentication service. Enter its address before connecting.</string>
+    <string name="contrib_mfi_home_mfi_remote_server">Server · %1$s</string>
+    <string name="contrib_mfi_home_mfi_remote_token">Access token · %1$s</string>
+    <string name="contrib_mfi_home_mfi_server_address">Server address</string>
+    <string name="contrib_mfi_home_mfi_server_required">Enter the remote authentication server address first.</string>
+    <string name="contrib_mfi_home_mfi_token">Access token</string>
+    <string name="contrib_mfi_home_mfi_token_set">configured</string>
+    <string name="contrib_mfi_home_mfi_usb">USB/CH341 chip</string>
+    <string name="contrib_mfi_home_mfi_usb_note">Requires a connected CH341 adapter and MFi authentication chip.</string>
+    <string name="contrib_mfi_home_section_mfi">CarPlay authentication</string>
+    <string name="contrib_mfi_host_err_server_required">Remote server address is required</string>
+</resources>

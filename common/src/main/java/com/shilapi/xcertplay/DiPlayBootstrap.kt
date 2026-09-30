@@ -1,20 +1,24 @@
 package com.shilapi.xcertplay
 
 import android.content.Context
+import com.shilapi.xcertplay.orchestration.MfiTarget
 import com.shilapi.xcertplay.airplay.AirPlayIdentity
 import com.shilapi.xcertplay.mfi.LocalMfiAuthenticationClient
-import com.shilapi.xcertplay.orchestration.MfiTarget
 import java.io.File
 import java.security.MessageDigest
 
-/** Installs the private beta's experimental identity. It has no remote fallback. */
+/** Installs bundled local authentication when present; other targets need no local identity. */
 internal object DiPlayBootstrap {
     @Volatile private var ready = false
 
     @Synchronized fun ensure(context: Context) {
         if (ready) return
         val target = File(context.noBackupFilesDir, LocalMfiAuthenticationClient.DIRECTORY)
-        if (!target.exists()) {
+        val bundledFiles = context.assets.list(LocalMfiAuthenticationClient.DIRECTORY).orEmpty().toSet()
+        if (!target.exists() && bundledFiles.isNotEmpty()) {
+            check(bundledFiles.containsAll(listOf("identity.pk8", "certificate.p7b"))) {
+                "Bundled local authentication is incomplete"
+            }
             val staging = File(context.noBackupFilesDir, "offline-mfi-staging")
             staging.deleteRecursively()
             check(staging.mkdirs()) { "Could not prepare local authentication" }
@@ -35,8 +39,9 @@ internal object DiPlayBootstrap {
                 staging.deleteRecursively()
             }
         }
-        LocalMfiAuthenticationClient.load(target)
-        AirPlayPersistence.saveMfiTarget(context, MfiTarget.LOCAL)
+        if (target.exists() && AirPlayPersistence.loadMfiTarget(context) == MfiTarget.LOCAL) {
+            LocalMfiAuthenticationClient.load(target)
+        }
         AirPlayPersistence.saveDebugLogsEnabled(context, false)
         ready = true
     }

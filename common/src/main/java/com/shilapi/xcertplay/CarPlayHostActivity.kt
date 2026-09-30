@@ -116,7 +116,7 @@ class CarPlayHostActivity : ComponentActivity() {
 
     // CH341 USB\VID_1A86&PID_5512&REV_0304 is the deployment-supplied bridge identity.
     private fun createRuntimeConfig(): CarPlayRuntimeConfig = CarPlayRuntimeConfig(
-        mfiTarget = MfiTarget.LOCAL,
+        mfiTarget = mfiTarget,
         ch341Devices = if (mfiTarget == MfiTarget.USB_CH341) {
             listOf(UsbDeviceId(0x1a86, 0x5512))
         } else {
@@ -574,6 +574,12 @@ class CarPlayHostActivity : ComponentActivity() {
             languagePreferenceAtCreate = languagePreference
             recreate()
             return
+        }
+        if (!menuOpen) {
+            mfiTarget = AirPlayPersistence.loadMfiTarget(this)
+            mfiI2cPath = AirPlayPersistence.loadMfiI2cPath(this)
+            remoteMfiServer = AirPlayPersistence.loadRemoteMfiServer(this)
+            remoteMfiToken = AirPlayPersistence.loadRemoteMfiToken(this)
         }
         locationPermissionAvailable = hasFineLocationPermission()
         if (locationReportingEnabled && !locationPermissionAvailable && !menuOpen) {
@@ -3101,6 +3107,10 @@ class CarPlayHostActivity : ComponentActivity() {
     private fun startCarPlay(size: DisplaySize) {
         if (CarPlayBackgroundSession.hasSession() && !CarPlayBackgroundSession.isOwner(this)) return
         if (shuttingDown.get() || menuOpen || handshakeResetInProgress || controller != null) return
+        if (mfiTarget == MfiTarget.REMOTE && remoteMfiServer.isBlank()) {
+            setConnectionStage(getString(R.string.contrib_mfi_host_err_server_required))
+            return
+        }
         val controllerGeneration = restartGeneration
         val config = createRuntimeConfig()
         val airPlayConfig = createAirPlayConfig(size)

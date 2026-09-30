@@ -1,0 +1,27 @@
+<resources>
+    <string name="contrib_mfi_home_choice_summary">%1$s · %2$s</string>
+    <string name="contrib_mfi_home_mfi_i2c">I²C 芯片</string>
+    <string name="contrib_mfi_home_mfi_i2c_device">I²C 设备路径</string>
+    <string name="contrib_mfi_home_mfi_i2c_note">从指定设备路径读取 MFi 芯片，需要相应的设备访问权限。</string>
+    <string name="contrib_mfi_home_mfi_i2c_path">I²C 设备 · %1$s</string>
+    <string name="contrib_mfi_home_mfi_invalid_i2c_path">请输入有效的 I²C 设备路径。</string>
+    <string name="contrib_mfi_home_mfi_invalid_server">服务地址需以 http:// 或 https:// 开头。</string>
+    <string name="contrib_mfi_home_mfi_invalid_token">访问令牌包含无效字符。</string>
+    <string name="contrib_mfi_home_mfi_local">本地离线认证</string>
+    <string name="contrib_mfi_home_mfi_local_note">使用随本应用安装的本地认证凭据。</string>
+    <string name="contrib_mfi_home_mfi_local_unavailable">未安装本地认证凭据。</string>
+    <string name="contrib_mfi_home_mfi_method">认证方式</string>
+    <string name="contrib_mfi_home_mfi_not_set">未设置</string>
+    <string name="contrib_mfi_home_mfi_remote">远程服务</string>
+    <string name="contrib_mfi_home_mfi_remote_note">使用配置的认证服务。连接前请填写服务地址。</string>
+    <string name="contrib_mfi_home_mfi_remote_server">服务地址 · %1$s</string>
+    <string name="contrib_mfi_home_mfi_remote_token">访问令牌 · %1$s</string>
+    <string name="contrib_mfi_home_mfi_server_address">服务地址</string>
+    <string name="contrib_mfi_home_mfi_server_required">请先填写远程认证服务地址。</string>
+    <string name="contrib_mfi_home_mfi_token">访问令牌</string>
+    <string name="contrib_mfi_home_mfi_token_set">已设置</string>
+    <string name="contrib_mfi_home_mfi_usb">USB/CH341 芯片</string>
+    <string name="contrib_mfi_home_mfi_usb_note">需要连接 CH341 适配器及 MFi 认证芯片。</string>
+    <string name="contrib_mfi_home_section_mfi">CarPlay 认证</string>
+    <string name="contrib_mfi_host_err_server_required">请填写远程服务器地址</string>
+</resources>
