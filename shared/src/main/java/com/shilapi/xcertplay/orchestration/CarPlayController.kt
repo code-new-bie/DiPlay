@@ -156,6 +156,9 @@ class CarPlayController(
     private enum class Phase { IDLE, MFI, WIRELESS, IPHONE, REENUMERATION, DATAPATHS, CONTROL }
 
     private val appContext = context.applicationContext
+    /** Held only while a session runs: keeps the radio awake against power-save stalls. */
+    private val wirelessPerformanceLock =
+        com.shilapi.xcertplay.network.WirelessPerformanceLock(appContext, ::debugLog)
     private val usbManager = context.getSystemService(UsbManager::class.java)
     private val bluetoothAdapter =
         appContext.getSystemService(BluetoothManager::class.java)?.adapter
@@ -237,6 +240,7 @@ class CarPlayController(
         override fun onSessionActive(session: AirPlaySession) {
             if (activeSession !== session) BydNavigationOutputs.start(appContext)
             activeSession = session
+            wirelessPerformanceLock.acquire()
             notifyMediaConnection(true)
             debugLog(
                 "AirPlay session active controller=${session.controllerId ?: "unknown"} " +
@@ -248,6 +252,7 @@ class CarPlayController(
         override fun onSessionEnded(session: AirPlaySession) {
             if (activeSession === session) {
                 activeSession = null
+                wirelessPerformanceLock.release()
                 notifyMediaConnection(false)
                 BydNavigationOutputs.endNow()
                 synchronized(playbackStatus) { playbackStatus.clear() }?.let { playing -> playbackListener?.invoke(playing) }
@@ -410,6 +415,7 @@ class CarPlayController(
             closed = true
         }
         BydNavigationOutputs.endNow()
+        wirelessPerformanceLock.release()
         BydNavigationOutputs.clearClusterStreamControl(::applyClusterUi)
         closeReceivers()
         availabilityPollGeneration.incrementAndGet()

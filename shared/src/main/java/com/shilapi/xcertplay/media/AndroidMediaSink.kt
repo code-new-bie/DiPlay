@@ -560,7 +560,9 @@ private class AudioRenderer(
     private var pcm = ByteArray(64 * 1024)
     private var playbackStarted = false
     private var prebufferBytes = 0
-    private var startThresholdBytes = 0
+    private var configuredStartBytes = 0
+    private var effectiveStartBytes = 0
+    private var trackCapacityBytes = 0
     private var fadeApplied = false
     private var droppedPacketsLogged = false
     private var firstAacPayloadLogged = false
@@ -740,18 +742,20 @@ private class AudioRenderer(
         track = built
         trackAttributes = built.audioAttributes
         val capacityBytes = built.bufferSizeInFrames * frameBytes
-        startThresholdBytes = MediaAudioBuffer.startBytesFor(plan.startBytes, capacityBytes, PREBUFFER_WRITE_CHUNK_BYTES)
+        trackCapacityBytes = capacityBytes
+        configuredStartBytes = MediaAudioBuffer.startBytesFor(plan.startBytes, capacityBytes, PREBUFFER_WRITE_CHUNK_BYTES)
+        effectiveStartBytes = configuredStartBytes
         report("Audio: ready audioType=${format.audioType} codec=${format.codec} " +
             "rate=${format.sampleRate} channels=${format.channels} " +
             "route=$routeLabel " +
-            "bufferMs=${capacityBytes * 1000L / bytesPerSecond} startMs=${startThresholdBytes * 1000L / bytesPerSecond}")
+            "bufferMs=${capacityBytes * 1000L / bytesPerSecond} startMs=${configuredStartBytes * 1000L / bytesPerSecond}")
         Log.i(
             TAG,
             "audio track prepared type=${format.payloadType} audioType=${format.audioType} " +
                 "codec=${format.codec} " +
                 "rate=${format.sampleRate} channels=${format.channels} " +
                 "route=$routeLabel " +
-                "buffer=${capacityBytes * 1000L / bytesPerSecond}ms start=${startThresholdBytes * 1000L / bytesPerSecond}",
+                "buffer=${capacityBytes * 1000L / bytesPerSecond}ms start=${configuredStartBytes * 1000L / bytesPerSecond}",
         )
         Log.i(
             TAG,
@@ -1064,7 +1068,7 @@ private class AudioRenderer(
             lastPcmWriteNs = System.nanoTime()
             if (!playbackStarted) {
                 prebufferBytes += count
-                if (prebufferBytes >= startThresholdBytes) {
+                if (prebufferBytes >= effectiveStartBytes) {
                     startPlayback(track)
                     Log.i(TAG, "audio playback started type=${format.payloadType}")
                 }
@@ -1088,6 +1092,15 @@ private class AudioRenderer(
             playbackStarted = false
             prebufferBytes = 0
             rebufferCount++
+            // Hold progressively more audio before resuming: wireless gaps of up to a second are
+            // normal on Wi-Fi Direct, and re-starving right after a resume is the audible stutter.
+            effectiveStartBytes = MediaAudioBuffer.resumeStartBytes(
+                configuredStartBytes,
+                trackCapacityBytes,
+                bytesPerSecond,
+                rebufferCount,
+                PREBUFFER_WRITE_CHUNK_BYTES,
+            )
         }
         // A short final burst may never reach the start threshold. Play it after a bounded wait.
         if (!playbackStarted && prebufferBytes > 0 && queue.isEmpty() &&
@@ -1108,6 +1121,7 @@ private class AudioRenderer(
             "dropped=${packetsDropped.getAndSet(0)} underruns=+${underruns - statsLastUnderruns} queue=${queue.size} " +
             "playing=$playbackStarted maxGapMs=${maxArrivalGapMs.getAndSet(0)} " +
             "sinceRxMs=${if (lastRx == 0L) -1 else (now - lastRx) / 1_000_000L} maxWriteMs=$maxWriteMs " +
+            "startMs=${if (bytesPerSecond <= 0) 0 else effectiveStartBytes * 1000L / bytesPerSecond} " +
             "decoderDroppedTotal=$inputDropped outputBuffersTotal=$outputBuffers rebuffers=$rebufferCount ended=$force"
         Log.i(STATS_TAG, line)
         report(line)
