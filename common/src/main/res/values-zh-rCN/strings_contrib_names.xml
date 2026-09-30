@@ -1,0 +1,7 @@
+<resources>
+    <string name="contrib_names_home_carplay_name">CarPlay 车载名称</string>
+    <string name="contrib_names_home_carplay_name_note">显示为 iPhone 上的车载名称和 CarPlay 内返回车机的名称。重新连接后生效。</string>
+    <string name="contrib_names_home_carplay_name_too_long">名称不能超过 63 个 UTF-8 字节。</string>
+    <string name="contrib_names_home_carplay_name_value">车载名称 · %1$s</string>
+    <string name="contrib_names_home_section_carplay_identity">CarPlay 身份</string>
+</resources>

@@ -48,6 +48,7 @@ object AirPlayPersistence {
     private const val KEY_MANUAL_HOTSPOT_CHANNEL = "manual_hotspot_channel"
     private const val KEY_MANUAL_HOTSPOT_SECURITY = "manual_hotspot_security"
     private const val KEY_DEBUG_LOGS_ENABLED = "debug_logs_enabled"
+    private const val KEY_CARPLAY_NAME = "carplay_name"
     private const val KEY_MANUFACTURER = "manufacturer"
     private const val KEY_MODEL = "model"
     private const val KEY_OEM_LABEL = "oem_label"
@@ -77,6 +78,7 @@ object AirPlayPersistence {
 
     const val DEFAULT_MANUFACTURER = "DiPlay"
     const val DEFAULT_MODEL = "DiPlay"
+    const val DEFAULT_CARPLAY_NAME = "DiPlay"
     const val DEFAULT_OEM_LABEL = "BYD"
     const val DEFAULT_MFI_I2C_PATH = "/dev/i2c-1"
 
@@ -311,6 +313,31 @@ object AirPlayPersistence {
             .apply()
     }
 
+    fun loadCarPlayName(context: Context): String =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString(KEY_CARPLAY_NAME, DEFAULT_CARPLAY_NAME)
+            ?.replace('\u0000', ' ')
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+            ?: DEFAULT_CARPLAY_NAME
+
+    fun saveCarPlayName(context: Context, name: String) {
+        val normalized = name.replace('\u0000', ' ').trim()
+            .ifBlank { DEFAULT_CARPLAY_NAME }
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val previousName = loadCarPlayName(context)
+        val previousLabel = prefs.getString(KEY_OEM_LABEL, null)
+        prefs.edit().apply {
+            putString(KEY_CARPLAY_NAME, normalized)
+            // Keep a separately customized CarPlay home icon label, but make the standard
+            // vehicle-name setting control the return-to-car label too.
+            if (previousLabel.isNullOrBlank() || previousLabel == DEFAULT_OEM_LABEL ||
+                previousLabel == previousName) {
+                putString(KEY_OEM_LABEL, normalized)
+            }
+        }.apply()
+    }
+
     fun loadManufacturer(context: Context): String =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getString(KEY_MANUFACTURER, null)
@@ -335,11 +362,16 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadOemLabel(context: Context): String =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getString(KEY_OEM_LABEL, DEFAULT_OEM_LABEL)
-            // iOS hides the car icon without a label.
-            .orEmpty().ifBlank { DEFAULT_OEM_LABEL }
+    fun loadOemLabel(context: Context): String {
+        val stored = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString(KEY_OEM_LABEL, null)
+        // Existing installs may already have a new vehicle name with the old default icon label.
+        if (stored.isNullOrBlank() || stored == DEFAULT_OEM_LABEL) {
+            return loadCarPlayName(context).takeUnless { it == DEFAULT_CARPLAY_NAME }
+                ?: DEFAULT_OEM_LABEL
+        }
+        return stored
+    }
 
     fun saveOemLabel(context: Context, oemLabel: String) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
