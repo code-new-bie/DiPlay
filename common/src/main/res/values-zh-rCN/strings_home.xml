@@ -26,7 +26,9 @@
     <string name="home_wireless_card_title">无线 CarPlay</string>
     <string name="home_status_ready_when_you_are">随时待命</string>
     <string name="home_btn_connect_phone">连接手机</string>
-    <string name="home_wireless_hint">先将 iPhone 与车载蓝牙配对，再进行连接。\n请保持蓝牙和 Wi-Fi 开启。</string>
+    <string name="home_wireless_hint">Wi-Fi Direct · 请保持车机的 Wi-Fi 开关、蓝牙和 iPhone 的 Wi-Fi 开启。</string>
+    <string name="home_wireless_hotspot_hint">车机自带热点 · 请保持车机热点、蓝牙和 iPhone 的 Wi-Fi 开启。</string>
+    <string name="home_wireless_setup_hint">请打开连接设置，保存车机自带热点的信息。</string>
     <string name="home_btn_choose_iphone">选择 iPhone</string>
     <string name="home_btn_disconnect">断开连接</string>
 
@@ -79,9 +81,12 @@
     <string name="home_mfi_invalid_token">访问令牌包含无效字符。</string>
     <string name="home_wireless_link_title">无线连接方式</string>
     <string name="home_wireless_link_choice">无线连接方式 · %1$s</string>
-    <string name="home_wireless_link_direct">Wi-Fi Direct · 默认</string>
-    <string name="home_wireless_link_car_hotspot">车载热点</string>
-    <string name="home_wireless_direct_note">DiPlay 会为 iPhone 创建专用的 Wi-Fi Direct 网络。</string>
+    <string name="home_wireless_link_direct">Wi-Fi Direct</string>
+    <string name="home_wireless_link_car_hotspot">车机自带热点</string>
+    <string name="home_wireless_hotspot_description">使用车机自带的热点。如果支持，请在车辆设置中选择 5 GHz。</string>
+    <string name="home_wireless_direct_description">另一种连接方式。需要开启车机的 Wi-Fi 开关；2.4 GHz 连接可能出现卡顿。</string>
+    <string name="home_connection_option_selected">"✓  %1$s"</string>
+    <string name="home_wireless_direct_note">请开启车机的 Wi-Fi 开关，按提示允许位置或附近设备权限，并在 Android 要求时开启定位。如果播放卡顿，可尝试使用车机自带的 5 GHz 热点。</string>
     <string name="home_direct_channel_title">Wi-Fi Direct 信道</string>
     <string name="home_direct_channel_choice">Wi-Fi Direct 信道 · %1$s</string>
     <string name="home_direct_channel_auto">自动</string>
@@ -98,6 +103,13 @@
     <string name="home_hotspot_password_value">热点密码 · %1$s</string>
     <string name="home_hotspot_password_none">无</string>
     <string name="home_hotspot_setup_note">请先在车辆设置中打开热点，并在这里输入相同的名称和密码。iPhone 会加入该网络以使用 CarPlay。更改将在下次连接时生效。</string>
+    <string name="home_hotspot_setup_title">热点设置</string>
+    <string name="home_hotspot_setup_steps">1. 打开车辆热点设置，开启热点，如果支持则选择 5 GHz。\n2. 将热点名称和密码准确填写到下方。\n3. 连接时保持车辆热点开启。DiPlay 通过蓝牙发送热点信息，iPhone 会自动加入。</string>
+    <string name="home_hotspot_save_use">保存热点信息并使用此模式</string>
+    <string name="home_hotspot_edit_saved">编辑已保存的热点 · %1$s</string>
+    <string name="home_hotspot_status_pending">完成设置 · 保存热点信息后即可使用此模式。</string>
+    <string name="home_hotspot_status_off">热点已关闭 · 请在车辆设置中开启。</string>
+    <string name="home_hotspot_status_saved">信息已保存 · 连接前请确认车辆热点已开启。</string>
     <string name="home_hotspot_error_name_required">请输入车载热点名称</string>
     <string name="home_hotspot_error_name_too_long">热点名称不能超过 32 字节</string>
     <string name="home_hotspot_error_invalid_character">热点名称或密码包含无效字符</string>
@@ -136,7 +148,8 @@
     <string name="home_btn_bluetooth_settings">蓝牙设置</string>
     <string name="home_btn_wireless_help">无线连接帮助</string>
 
-    <string name="home_section_about_diagnostics">关于与诊断</string>
+    <string name="home_section_diagnostics">诊断</string>
+    <string name="home_section_about">关于</string>
     <string name="home_btn_about">关于 DiPlay</string>
     <string name="home_btn_saving_report">正在保存报告…</string>
     <string name="home_btn_save_report">保存诊断报告</string>

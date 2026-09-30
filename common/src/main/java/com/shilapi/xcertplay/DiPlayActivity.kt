@@ -153,8 +153,11 @@ class DiPlayActivity : ComponentActivity() {
             else connect(true)
         }
         card.addView(connectButton, matchButton())
-        val connectionHint = if (AirPlayPersistence.loadWirelessHotspotMode(this) == WirelessHotspotMode.MANUAL)
-            getString(R.string.home_hotspot_setup_note) else getString(R.string.home_wireless_hint)
+        val connectionHint = when (AirPlayPersistence.loadWirelessHotspotMode(this)) {
+            WirelessHotspotMode.MANUAL -> getString(R.string.home_wireless_hotspot_hint)
+            WirelessHotspotMode.LOCAL_ONLY_HOTSPOT -> getString(R.string.home_wireless_setup_hint)
+            else -> getString(R.string.home_wireless_hint)
+        }
         card.addView(label(connectionHint, 15, MUTED).apply { setPadding(0, dp(14), 0, 0) })
         if (carHotspotOff()) {
             card.addView(label(getString(R.string.home_hotspot_off_warning, AirPlayPersistence.loadManualHotspotSsid(this)), 15, WARNING).apply { setPadding(0, dp(14), 0, 0) })
@@ -209,18 +212,24 @@ class DiPlayActivity : ComponentActivity() {
     private fun settings(content: LinearLayout) {
         content.addView(label(getString(R.string.home_settings_title), 34, TEXT, true))
         content.addView(label(getString(R.string.home_settings_intro), 17, MUTED).apply { setPadding(0, dp(8), 0, dp(24)) })
-        section(content, getString(R.string.home_section_auto_connect), R.drawable.ic_dp_automation) { card ->
-            toggle(card, getString(R.string.home_toggle_connect_on_open), getString(R.string.home_toggle_connect_on_open_desc), DiPlayPreferences.autoConnect(this)) { DiPlayPreferences.saveAutoConnect(this, it) }
-            toggle(card, getString(R.string.home_toggle_open_after_start), getString(R.string.home_toggle_open_after_start_desc), AirPlayPersistence.loadAutoStartOnBoot(this)) { AirPlayPersistence.saveAutoStartOnBoot(this, it) }
-            card.addView(button(getString(R.string.home_btn_choose_iphone_named, DiPlayPreferences.phoneName(this)), false) { choosePhone() }, matchButton(12, 60))
-        }
         section(content, getString(R.string.home_connection_setup_title), R.drawable.ic_dp_connection) { card ->
             card.addView(label(getString(R.string.home_connection_setup_note), 16, MUTED))
             card.addView(button(getString(R.string.home_btn_open_connection_setup), false) { page = "connection"; render() }, matchButton(12, 60))
         }
-        section(content, getString(R.string.home_section_mfi), R.drawable.ic_dp_permissions) { card -> mfiControls(card) }
-        section(content, getString(R.string.home_section_carplay_identity), R.drawable.ic_dp_display) { card ->
-            carPlayNameControl(card)
+        section(content, getString(R.string.home_section_diagnostics), R.drawable.ic_dp_diagnostics) { card ->
+            exportButton = button(if (exportInProgress) getString(R.string.home_btn_saving_report) else getString(R.string.home_btn_save_report), false) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) exportDiagnostics()
+                else chooseReportDestination()
+            }.apply { isEnabled = !exportInProgress }
+            card.addView(exportButton, matchButton(0, 60))
+            card.addView(button(getString(R.string.home_btn_choose_save_location), false) { chooseReportDestination() }, matchButton(10, 60))
+            val destination = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) getString(R.string.home_report_destination_downloads) else getString(R.string.home_report_destination_pick)
+            card.addView(label(destination + getString(R.string.home_report_privacy), 14, MUTED).apply { setPadding(0, dp(12), 0, 0) })
+        }
+        section(content, getString(R.string.home_section_auto_connect), R.drawable.ic_dp_automation) { card ->
+            toggle(card, getString(R.string.home_toggle_connect_on_open), getString(R.string.home_toggle_connect_on_open_desc), DiPlayPreferences.autoConnect(this)) { DiPlayPreferences.saveAutoConnect(this, it) }
+            toggle(card, getString(R.string.home_toggle_open_after_start), getString(R.string.home_toggle_open_after_start_desc), AirPlayPersistence.loadAutoStartOnBoot(this)) { AirPlayPersistence.saveAutoStartOnBoot(this, it) }
+            card.addView(button(getString(R.string.home_btn_choose_iphone_named, DiPlayPreferences.phoneName(this)), false) { choosePhone() }, matchButton(12, 60))
         }
         section(content, getString(R.string.home_section_display_performance), R.drawable.ic_dp_display) { card ->
             iconSizeControl(card)
@@ -303,22 +312,18 @@ class DiPlayActivity : ComponentActivity() {
             mediaChannelControl(card)
             navigationChannelControl(card)
         }
+        section(content, getString(R.string.home_section_mfi), R.drawable.ic_dp_permissions) { card -> mfiControls(card) }
+        section(content, getString(R.string.home_section_carplay_identity), R.drawable.ic_dp_display) { card ->
+            carPlayNameControl(card)
+        }
         section(content, getString(R.string.home_section_permissions), R.drawable.ic_dp_permissions) { card ->
             card.addView(label(getString(R.string.home_permissions_note), 16, MUTED))
             card.addView(button(getString(R.string.home_btn_app_permissions), false) { openSystem(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) }, matchButton(16, 60))
             card.addView(button(getString(R.string.home_btn_bluetooth_settings), false) { openSystem(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) }, matchButton(10, 60))
             card.addView(button(getString(R.string.home_btn_wireless_help), false) { wirelessHelp() }, matchButton(10, 60))
         }
-        section(content, getString(R.string.home_section_about_diagnostics), R.drawable.ic_dp_about) { card ->
+        section(content, getString(R.string.home_section_about), R.drawable.ic_dp_about) { card ->
             card.addView(button(getString(R.string.home_btn_about), false) { page = "about"; render() }, matchButton(0, 60))
-            exportButton = button(if (exportInProgress) getString(R.string.home_btn_saving_report) else getString(R.string.home_btn_save_report), false) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) exportDiagnostics()
-                else chooseReportDestination()
-            }.apply { isEnabled = !exportInProgress }
-            card.addView(exportButton, matchButton(10, 60))
-            card.addView(button(getString(R.string.home_btn_choose_save_location), false) { chooseReportDestination() }, matchButton(10, 60))
-            val destination = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) getString(R.string.home_report_destination_downloads) else getString(R.string.home_report_destination_pick)
-            card.addView(label(destination + getString(R.string.home_report_privacy), 14, MUTED).apply { setPadding(0, dp(12), 0, 0) })
         }
     }
 
@@ -419,31 +424,48 @@ class DiPlayActivity : ComponentActivity() {
     }
 
     private fun wirelessLinkControls(parent: LinearLayout) {
-        val carHotspot = pendingCarHotspotSetup || AirPlayPersistence.loadWirelessHotspotMode(this) == WirelessHotspotMode.MANUAL
-        val options = arrayOf(getString(R.string.home_wireless_link_direct), getString(R.string.home_wireless_link_car_hotspot))
-        val control = button(getString(R.string.home_wireless_link_choice, options[if (carHotspot) 1 else 0]), false) {}
-        control.setOnClickListener {
-            var selection = if (carHotspot) 1 else 0
-            AlertDialog.Builder(this).setTitle(getString(R.string.home_wireless_link_title))
-                .setSingleChoiceItems(options, selection) { _, index -> selection = index }
-                .setPositiveButton(if (CarPlayBackgroundSession.hasSession()) getString(R.string.home_btn_apply_reconnect) else getString(R.string.home_btn_save)) { _, _ ->
-                    when {
-                        pendingCarHotspotSetup && selection == 1 -> askHotspotCredentials { ssid, password ->
-                            saveHotspotCredentials(ssid, password)
-                            applyWirelessLink(WirelessHotspotMode.MANUAL)
-                        }
-                        (selection == 1) == carHotspot -> Unit
-                        selection == 0 -> applyWirelessLink(WirelessHotspotMode.WIFI_P2P)
-                        hotspotError(storedSsid(), storedPassword()) == null -> applyWirelessLink(WirelessHotspotMode.MANUAL)
-                        else -> askHotspotCredentials { ssid, password ->
-                            saveHotspotCredentials(ssid, password)
-                            applyWirelessLink(WirelessHotspotMode.MANUAL)
-                        }
-                    }
-                }.setNegativeButton(getString(R.string.home_btn_cancel), null).show()
+        val mode = if (pendingCarHotspotSetup) WirelessHotspotMode.MANUAL else AirPlayPersistence.loadWirelessHotspotMode(this)
+        val modes = listOf(WirelessHotspotMode.MANUAL, WirelessHotspotMode.WIFI_P2P)
+        val titles = listOf(getString(R.string.home_wireless_link_car_hotspot), getString(R.string.home_wireless_link_direct))
+        val descriptions = listOf(getString(R.string.home_wireless_hotspot_description), getString(R.string.home_wireless_direct_description))
+        val wide = resources.configuration.screenWidthDp >= 850
+        val choices = if (wide) row().apply { gravity = Gravity.TOP } else column()
+        parent.addView(choices)
+        modes.forEachIndexed { index, candidate ->
+            val option = column()
+            choices.addView(option, if (wide) LinearLayout.LayoutParams(0, -2, 1f).apply {
+                if (index > 0) marginStart = dp(16)
+            } else LinearLayout.LayoutParams(-1, -2))
+            val title = if (mode == candidate) getString(R.string.home_connection_option_selected, titles[index]) else titles[index]
+            option.addView(button(title, mode == candidate) {
+                if (candidate == WirelessHotspotMode.MANUAL) {
+                    pendingCarHotspotSetup = true
+                    render()
+                } else {
+                    pendingCarHotspotSetup = false
+                    applyWirelessLink(candidate)
+                }
+            }, matchButton(12, 60))
+            option.addView(label(descriptions[index], 15, MUTED).apply { setPadding(0, dp(6), 0, dp(12)) })
         }
-        parent.addView(control, matchButton(0, 60)); parent.addView(space(12))
-        if (!carHotspot) {
+        if (mode == WirelessHotspotMode.MANUAL) {
+            parent.addView(label(getString(R.string.home_hotspot_setup_title), 22, TEXT, true))
+            parent.addView(label(getString(R.string.home_hotspot_setup_steps), 16, MUTED).apply { setPadding(0, dp(8), 0, dp(12)) })
+            parent.addView(button(getString(R.string.home_btn_open_car_hotspot_settings), false) { openCarWifiSettings() }, matchButton(0, 60))
+            parent.addView(button(if (pendingCarHotspotSetup) getString(R.string.home_hotspot_save_use) else getString(R.string.home_hotspot_edit_saved, storedSsid()), false) {
+                askHotspotCredentials { ssid, password ->
+                    saveHotspotCredentials(ssid, password)
+                    pendingCarHotspotSetup = false
+                    applyWirelessLink(WirelessHotspotMode.MANUAL)
+                }
+            }, matchButton(12, 60))
+            val status = when {
+                pendingCarHotspotSetup -> R.string.home_hotspot_status_pending
+                carHotspotOff() -> R.string.home_hotspot_status_off
+                else -> R.string.home_hotspot_status_saved
+            }
+            parent.addView(label(getString(status), 15, if (carHotspotOff()) WARNING else MUTED).apply { setPadding(0, dp(12), 0, 0) })
+        } else {
             parent.addView(label(getString(R.string.home_wireless_direct_note), 14, MUTED).apply {
                 setPadding(0, 0, 0, dp(10))
             })
@@ -477,32 +499,7 @@ class DiPlayActivity : ComponentActivity() {
                 setPadding(0, dp(8), 0, dp(18))
             })
             parent.addView(button(getString(R.string.home_btn_open_car_wifi_settings), false) { openCarClientWifiSettings() }, matchButton(0, 60))
-            return
         }
-        if (pendingCarHotspotSetup) {
-            parent.addView(label(getString(R.string.home_hotspot_setup_note), 16, MUTED))
-            parent.addView(button(getString(R.string.home_btn_open_car_hotspot_settings), false) { openCarWifiSettings() }, matchButton(10, 60))
-        }
-        val ssid = storedSsid()
-        val password = storedPassword()
-        parent.addView(button(getString(R.string.home_hotspot_name_value, ssid), false) {
-            textInput(getString(R.string.home_hotspot_name), ssid, secret = false) { value ->
-                hotspotError(value, password)?.let { toast(it); return@textInput }
-                saveHotspotCredentials(value, password)
-                render()
-            }
-        }, matchButton(0, 60))
-        parent.addView(space(12))
-        parent.addView(button(getString(R.string.home_hotspot_password_value, if (password.isEmpty()) getString(R.string.home_hotspot_password_none) else "•".repeat(8)), false) {
-            textInput(getString(R.string.home_hotspot_password), password, secret = true) { value ->
-                hotspotError(ssid, value)?.let { toast(it); return@textInput }
-                saveHotspotCredentials(ssid, value)
-                render()
-            }
-        }, matchButton(0, 60))
-        parent.addView(label(getString(R.string.home_hotspot_setup_note), 14, MUTED).apply {
-            setPadding(0, dp(8), 0, dp(18))
-        })
     }
 
     private fun mfiControls(parent: LinearLayout) {

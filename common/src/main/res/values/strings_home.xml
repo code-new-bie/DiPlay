@@ -26,7 +26,9 @@
     <string name="home_wireless_card_title">WIRELESS CARPLAY</string>
     <string name="home_status_ready_when_you_are">Ready when you are</string>
     <string name="home_btn_connect_phone">Connect phone</string>
-    <string name="home_wireless_hint">Pair your iPhone with the car’s Bluetooth, then connect.\nKeep Bluetooth and Wi-Fi on.</string>
+    <string name="home_wireless_hint">Wi-Fi Direct · Keep the car’s Wi-Fi switch, Bluetooth and your iPhone’s Wi-Fi on.</string>
+    <string name="home_wireless_hotspot_hint">Built-in car hotspot · Keep the car hotspot, Bluetooth and your iPhone’s Wi-Fi on.</string>
+    <string name="home_wireless_setup_hint">Open Connection setup to save your built-in car hotspot details.</string>
     <string name="home_btn_choose_iphone">Choose iPhone</string>
     <string name="home_btn_disconnect">Disconnect</string>
 
@@ -79,9 +81,12 @@
     <string name="home_mfi_invalid_token">The token contains an invalid character.</string>
     <string name="home_wireless_link_title">Wireless link</string>
     <string name="home_wireless_link_choice">Wireless link · %1$s</string>
-    <string name="home_wireless_link_direct">Wi-Fi Direct · default</string>
-    <string name="home_wireless_link_car_hotspot">Car hotspot</string>
-    <string name="home_wireless_direct_note">DiPlay creates its own Wi-Fi Direct network for the iPhone.</string>
+    <string name="home_wireless_link_direct">Wi-Fi Direct</string>
+    <string name="home_wireless_link_car_hotspot">Built-in car hotspot</string>
+    <string name="home_wireless_hotspot_description">Use the car’s own hotspot. Select 5 GHz in car settings if available.</string>
+    <string name="home_wireless_direct_description">Alternative setup. Requires the car’s Wi-Fi switch on; a 2.4 GHz connection may stutter.</string>
+    <string name="home_connection_option_selected">"✓  %1$s"</string>
+    <string name="home_wireless_direct_note">Turn the car’s Wi-Fi switch on. Allow Location / Nearby devices if requested and enable Location when Android asks. If playback stutters, try the built-in car hotspot at 5 GHz.</string>
     <string name="home_direct_channel_title">Wi-Fi Direct channel</string>
     <string name="home_direct_channel_choice">Wi-Fi Direct channel · %1$s</string>
     <string name="home_direct_channel_auto">Auto</string>
@@ -98,6 +103,13 @@
     <string name="home_hotspot_password_value">Hotspot password · %1$s</string>
     <string name="home_hotspot_password_none">none</string>
     <string name="home_hotspot_setup_note">Turn on the hotspot in the car settings first and enter the same name and password here. The iPhone joins this network for CarPlay. Changes apply to your next connection.</string>
+    <string name="home_hotspot_setup_title">Hotspot setup</string>
+    <string name="home_hotspot_setup_steps">1. Open car hotspot settings, turn the hotspot on and select 5 GHz if available.\n2. Copy its name and password below exactly.\n3. Leave the car hotspot on when connecting. DiPlay sends the details over Bluetooth; your iPhone joins automatically.</string>
+    <string name="home_hotspot_save_use">Save hotspot details and use this mode</string>
+    <string name="home_hotspot_edit_saved">Edit saved hotspot · %1$s</string>
+    <string name="home_hotspot_status_pending">Finish setup · Save your hotspot details to use this mode.</string>
+    <string name="home_hotspot_status_off">Hotspot is off · Turn it on in car settings.</string>
+    <string name="home_hotspot_status_saved">Details saved · Check that the car hotspot is on before connecting.</string>
     <string name="home_hotspot_error_name_required">Enter the car hotspot name</string>
     <string name="home_hotspot_error_name_too_long">The hotspot name must be at most 32 bytes</string>
     <string name="home_hotspot_error_invalid_character">The name or password contains an invalid character</string>
@@ -136,7 +148,8 @@
     <string name="home_btn_bluetooth_settings">Bluetooth settings</string>
     <string name="home_btn_wireless_help">Wireless connection help</string>
 
-    <string name="home_section_about_diagnostics">About and diagnostics</string>
+    <string name="home_section_diagnostics">Diagnostics</string>
+    <string name="home_section_about">About</string>
     <string name="home_btn_about">About DiPlay</string>
     <string name="home_btn_saving_report">Saving report…</string>
     <string name="home_btn_save_report">Save diagnostic report</string>
