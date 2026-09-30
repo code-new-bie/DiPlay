@@ -1,0 +1,6 @@
+<resources>
+    <string name="contrib_vpn_host_vpn_denied">Wired CarPlay needs local network permission. Return to DiPlay to retry.</string>
+    <string name="contrib_vpn_host_vpn_explain_continue">Continue</string>
+    <string name="contrib_vpn_host_vpn_explain_message">DiPlay connects your iPhone’s USB network to this head unit. Android calls this a VPN connection. The VPN interface is local to the head unit: it does not connect to a remote VPN server or route your internet traffic. Continue, then allow the Android permission prompt.</string>
+    <string name="contrib_vpn_host_vpn_explain_title">Allow the wired CarPlay connection</string>
+</resources>

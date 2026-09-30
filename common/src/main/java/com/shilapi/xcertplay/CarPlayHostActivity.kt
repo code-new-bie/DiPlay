@@ -164,7 +164,8 @@ class CarPlayHostActivity : ComponentActivity() {
                 vpnReady = true
                 maybeStartCarPlay()
             } else {
-                setStatus(getString(R.string.vpn_consent_was_denied))
+                setConnectionStage(getString(R.string.contrib_vpn_host_vpn_denied))
+                appendLog("VPN consent was denied")
             }
         }
     private val wirelessPermissions =
@@ -510,13 +511,24 @@ class CarPlayHostActivity : ComponentActivity() {
             PackageManager.PERMISSION_GRANTED
 
     private fun requestVpnConsent() {
+        if (vpnReady || awaitingVpnConsent) return
         val consent = CarPlayVpnService.prepare(this)
         if (consent == null) {
             vpnReady = true
             maybeStartCarPlay()
         } else {
             awaitingVpnConsent = true
-            vpnConsent.launch(consent)
+            fun cancelled() {
+                awaitingVpnConsent = false
+                setConnectionStage(getString(R.string.contrib_vpn_host_vpn_denied))
+            }
+            android.app.AlertDialog.Builder(this)
+                .setTitle(R.string.contrib_vpn_host_vpn_explain_title)
+                .setMessage(R.string.contrib_vpn_host_vpn_explain_message)
+                .setPositiveButton(R.string.contrib_vpn_host_vpn_explain_continue) { _, _ -> vpnConsent.launch(consent) }
+                .setNegativeButton(R.string.cancel) { _, _ -> cancelled() }
+                .setOnCancelListener { cancelled() }
+                .show()
         }
     }
 

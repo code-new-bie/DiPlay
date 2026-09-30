@@ -1,0 +1,6 @@
+<resources>
+    <string name="contrib_vpn_host_vpn_denied">有线 CarPlay 需要本地网络授权。返回 DiPlay 后可重试。</string>
+    <string name="contrib_vpn_host_vpn_explain_continue">继续</string>
+    <string name="contrib_vpn_host_vpn_explain_message">DiPlay 需要将 iPhone 的 USB 网络接入车机。Android 将其显示为“VPN 连接”。这个 VPN 接口仅在车机本地使用，不连接远程 VPN 服务器，也不接管车机的互联网流量。点击“继续”后，请在 Android 系统提示中允许。</string>
+    <string name="contrib_vpn_host_vpn_explain_title">允许有线 CarPlay 连接</string>
+</resources>
