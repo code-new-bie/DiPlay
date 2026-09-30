@@ -31,6 +31,81 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.TimeUnit
 
+/** Owns one focus request for all eligible tracks in a CarPlay sink. */
+internal class AudioFocusCoordinator(context: Context?, private val enabled: Boolean) {
+    private data class Entry(val channel: AudioChannel, val attributes: AudioAttributes)
+
+    private val manager = context?.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+    private val active = LinkedHashMap<AudioTrack, Entry>()
+    private var request: AudioFocusRequest? = null
+    private var requestedChannel: AudioChannel? = null
+    private val listener = AudioManager.OnAudioFocusChangeListener { change ->
+        synchronized(this) {
+            when (change) {
+                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> setVolume(DUCKED_VOLUME)
+                AudioManager.AUDIOFOCUS_GAIN -> setVolume(FULL_VOLUME)
+                // Keep CarPlay audio running on permanent or transient loss. Some head units
+                // do not send a later gain callback after taking focus back.
+            }
+        }
+    }
+
+    @Synchronized
+    fun acquire(track: AudioTrack, channel: AudioChannel, attributes: AudioAttributes) {
+        if (!enabled || manager == null || channel == AudioChannel.NAVIGATION) return
+        active[track] = Entry(channel, attributes)
+        refreshRequest()
+    }
+
+    @Synchronized
+    fun release(track: AudioTrack) {
+        if (active.remove(track) != null) refreshRequest()
+    }
+
+    private fun refreshRequest() {
+        val primary = active.values.maxByOrNull { it.channel.focusPriority() }
+        if (primary == null) {
+            request?.let { manager?.abandonAudioFocusRequest(it) }
+            request = null
+            requestedChannel = null
+            return
+        }
+        if (request != null && requestedChannel == primary.channel) return
+        request?.let { manager?.abandonAudioFocusRequest(it) }
+        val gain = when (primary.channel) {
+            AudioChannel.MEDIA -> AudioManager.AUDIOFOCUS_GAIN
+            AudioChannel.PHONE -> AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
+            AudioChannel.ASSISTANT -> AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+            AudioChannel.NAVIGATION -> return
+        }
+        val next = AudioFocusRequest.Builder(gain)
+            .setAudioAttributes(primary.attributes)
+            .setOnAudioFocusChangeListener(listener, Handler(Looper.getMainLooper()))
+            .build()
+        request = next
+        requestedChannel = primary.channel
+        val result = manager?.requestAudioFocus(next)
+        Log.i(TAG, "audio focus requested channel=${primary.channel} gain=$gain granted=$result active=${active.size}")
+    }
+
+    private fun setVolume(volume: Float) {
+        active.keys.forEach { track -> runCatching { track.setStereoVolume(volume, volume) } }
+    }
+
+    private fun AudioChannel.focusPriority(): Int = when (this) {
+        AudioChannel.MEDIA -> 3
+        AudioChannel.PHONE -> 2
+        AudioChannel.ASSISTANT -> 1
+        AudioChannel.NAVIGATION -> 0
+    }
+
+    private companion object {
+        const val TAG = "DiPlay-AudioFocus"
+        const val FULL_VOLUME = 1f
+        const val DUCKED_VOLUME = 0.2f
+    }
+}
+
 /**
  * Android rendering backend for the CarPlay media engine. Video frames are
  * decoded with MediaCodec onto a Surface; audio streams are decoded to PCM and
@@ -56,6 +131,7 @@ class AndroidMediaSink(
     private val onMediaAudioChanged: (Boolean) -> Unit = {},
 ) : MediaSink {
     private val appContext = context?.applicationContext
+    private val audioFocusCoordinator = AudioFocusCoordinator(appContext, audioFocusEnabled)
     private val screenStateLock = Any()
     private val activeScreenTypes = mutableSetOf<Int>()
     private val defaultSurface = surface
@@ -209,7 +285,7 @@ class AndroidMediaSink(
             audioFocusEnabled,
             mediaChannel,
             navigationChannel,
-            appContext,
+            audioFocusCoordinator,
             navigationStreamType,
             mediaBufferMillis,
             onAudioDiagnostic,
@@ -540,16 +616,13 @@ private class AudioRenderer(
     private val audioFocusEnabled: Boolean,
     private val mediaChannel: Int,
     private val navigationChannel: Int,
-    context: Context?,
+    private val audioFocusCoordinator: AudioFocusCoordinator,
     private val navigationStreamType: Int,
     private val mediaBufferMillis: Int,
     private val report: (String) -> Unit,
 ) : Closeable {
     private data class AudioPacket(val rtp: ByteArray, val sample: Int)
 
-    private val audioManager = context?.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
-    private val focusHandler = Handler(Looper.getMainLooper())
-    private var focusRequest: AudioFocusRequest? = null
     private var trackAttributes: AudioAttributes? = null
     private var mappedChannel: AudioChannel? = null
     private val queue = LinkedBlockingQueue<AudioPacket>(MAX_QUEUED_PACKETS)
@@ -583,16 +656,6 @@ private class AudioRenderer(
     private var lastPcmWriteNs = 0L
     private var rebufferCount = 0
     private val thread = Thread(::run, "carplay-audio").apply { isDaemon = true }
-
-    private val focusListener = AudioManager.OnAudioFocusChangeListener { change ->
-        when (change) {
-            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> setTrackVolume(DUCKED_VOLUME)
-            AudioManager.AUDIOFOCUS_GAIN -> setTrackVolume(FULL_VOLUME)
-            // LOSS / LOSS_TRANSIENT deliberately keep playing. CarPlay is the active source
-            // while the session runs, and some head units never return focus once it is
-            // taken back by the system, so self-muting here would silence audio forever.
-        }
-    }
 
     fun start() {
         if (started) return
@@ -764,7 +827,7 @@ private class AudioRenderer(
         )
     }
 
-    /** 0 keeps the usage-based routing; 1-40 is a head-unit-defined channel number. */
+    /** 0 keeps usage routing; 1-10 selects an Android legacy stream ID. */
     private fun channelOverride(channel: AudioChannel): Int = when (channel) {
         AudioChannel.MEDIA -> mediaChannel
         AudioChannel.NAVIGATION -> navigationChannel
@@ -775,14 +838,14 @@ private class AudioRenderer(
         selection: AudioChannelSelection,
         streamOverride: Int,
     ): AudioAttributes {
-        if (streamOverride in 1..40) {
-            // The number is a head-unit-defined channel routed by the vehicle's own audio
-            // policy, so hand it to the platform as a legacy stream type rather than guessing
-            // a usage. Platforms that reject the number keep the usage-based attributes.
+        if (streamOverride in AudioManager.STREAM_SYSTEM..AudioManager.STREAM_ACCESSIBILITY) {
+            // Android accepts only its defined legacy stream IDs here. BYD audio policy can
+            // map these standard streams to vehicle outputs; arbitrary channel numbers are
+            // not valid AudioAttributes legacy stream types.
             try {
                 return AudioAttributes.Builder().setLegacyStreamType(streamOverride).build()
             } catch (error: Exception) {
-                Log.w(TAG, "audio channel $streamOverride rejected; keeping usage routing", error)
+                Log.w(TAG, "legacy audio stream $streamOverride rejected; keeping usage routing", error)
             }
         }
         return AudioAttributes.Builder()
@@ -811,43 +874,21 @@ private class AudioRenderer(
             .build()
 
     /**
-     * Requests focus so other apps treat this renderer as the active source. Navigation
-     * guidance intentionally takes no focus: it overlays media without ducking it.
+     * Shares a sink-level focus request across all active non-navigation renderers.
+     * Navigation guidance intentionally takes no focus: it overlays media without ducking it.
      */
     private fun requestAudioFocus() {
-        if (!audioFocusEnabled) return
-        val manager = audioManager ?: return
         val channel = mappedChannel ?: return
         val attributes = trackAttributes ?: return
         if (channel == AudioChannel.NAVIGATION) {
             Log.i(TAG, "audio focus skipped channel=NAVIGATION; overlays without ducking")
             return
         }
-        val focusGain = when (channel) {
-            AudioChannel.MEDIA -> AudioManager.AUDIOFOCUS_GAIN
-            AudioChannel.ASSISTANT -> AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
-            AudioChannel.PHONE -> AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
-            AudioChannel.NAVIGATION -> return
-        }
-        val request = AudioFocusRequest.Builder(focusGain)
-            .setAudioAttributes(attributes)
-            .setOnAudioFocusChangeListener(focusListener, focusHandler)
-            .build()
-        focusRequest = request
-        val granted = manager.requestAudioFocus(request)
-        Log.i(TAG, "audio focus requested channel=$channel gain=$focusGain granted=$granted")
+        track?.let { audioFocusCoordinator.acquire(it, channel, attributes) }
     }
 
     private fun abandonAudioFocus() {
-        val request = focusRequest ?: return
-        focusRequest = null
-        audioManager?.abandonAudioFocusRequest(request)
-    }
-
-    private fun setTrackVolume(volume: Float) {
-        val active = track ?: return
-        val result = active.setStereoVolume(volume, volume)
-        Log.i(TAG, "audio focus volume type=${format.payloadType} volume=$volume result=$result")
+        track?.let(audioFocusCoordinator::release)
     }
 
     private fun pcmFormat(encoding: Int, channelMask: Int) = AndroidAudioFormat.Builder()
@@ -1190,8 +1231,5 @@ private class AudioRenderer(
         const val STATS_TAG = "DiPlay-AudioStats"
         const val STATS_WINDOW_NS = 5_000_000_000L
         const val DECODED_BUFFER_LOG_INTERVAL = 50
-        const val FULL_VOLUME = 1f
-        const val DUCKED_VOLUME = 0.2f
-        const val MUTED_VOLUME = 0f
     }
 }

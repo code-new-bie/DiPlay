@@ -562,8 +562,8 @@ class DiPlayActivity : ComponentActivity() {
         val preview = AudioChannelPreview { channel ->
             toast(getString(R.string.contrib_audio_home_channel_preview_unavailable, channel))
         }
-        val labels = (0..40).map(Int::toString).toTypedArray()
-        var selection = current.coerceIn(0, 40)
+        val labels = (0..10).map(Int::toString).toTypedArray()
+        var selection = current.coerceIn(0, 10)
         AlertDialog.Builder(this).setTitle(title)
             .setSingleChoiceItems(labels, selection) { _, which ->
                 selection = which
