@@ -9,10 +9,7 @@ object MediaAudioBuffer {
     const val DEFAULT_MILLIS = 300
     val presets = listOf(DEFAULT_MILLIS, 500, 1000)
 
-    /** Room above the start level: bursts after a gap and the grown resume level must fit. */
-    private const val HEADROOM_MILLIS = 500
-    /** Each starvation raises the media resume level by this much audio. */
-    const val REBUFFER_STEP_MILLIS = 200
+    private const val HEADROOM_MILLIS = 200 // room above the start level so bursts after a gap fit
     private const val MIN_TRACK_BUFFER_BYTES = 16 * 1024
     private const val MIN_START_BUFFER_BYTES = 4 * 1024
 
@@ -43,27 +40,5 @@ object MediaAudioBuffer {
     fun startBytesFor(plannedStartBytes: Int, actualCapacityBytes: Int, writeChunkBytes: Int): Int {
         if (actualCapacityBytes <= 0) return plannedStartBytes
         return minOf(plannedStartBytes, actualCapacityBytes - writeChunkBytes).coerceAtLeast(writeChunkBytes)
-    }
-
-    /**
-     * Resume level for a media stream that has starved [starvations] times: the configured level
-     * plus one [REBUFFER_STEP_MILLIS] step per starvation, capped by the largest preset and by what
-     * the track can actually hold. Holding more audio before resuming rides out the radio gaps that
-     * caused the starvation instead of starving again a few hundred milliseconds later.
-     */
-    fun resumeStartBytes(
-        configuredStartBytes: Int,
-        capacityBytes: Int,
-        bytesPerSecond: Int,
-        starvations: Int,
-        writeChunkBytes: Int,
-    ): Int {
-        if (bytesPerSecond <= 0 || starvations <= 0) return configuredStartBytes
-        val capBytes = bytesPerSecond.toLong() * presets.last() / 1000
-        val grown = (configuredStartBytes.toLong() +
-            bytesPerSecond.toLong() * REBUFFER_STEP_MILLIS * starvations / 1000)
-            .coerceAtMost(capBytes)
-            .toInt()
-        return maxOf(configuredStartBytes, startBytesFor(grown, capacityBytes, writeChunkBytes))
     }
 }
