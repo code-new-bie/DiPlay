@@ -54,15 +54,7 @@ class ScreenStream(private val key: ByteArray, private val onDiagnostic: (String
 
     private fun accept(bound: ServerSocket) {
         try {
-            val accepted = bound.accept().apply {
-                // One long-lived screen stream: Nagle would only add latency to the small
-                // header messages, and a larger receive window rides out the frame bursts the
-                // iPhone sends after a screen update.
-                tcpNoDelay = true
-                keepAlive = true
-                runCatching { receiveBufferSize = SCREEN_RECEIVE_BUFFER_BYTES }
-            }
-            com.shilapi.xcertplay.network.TcpLiveness.configure(accepted) { onDiagnostic(it) }
+            val accepted = bound.accept()
             socket = accepted
             run(accepted)
         } catch (error: Exception) {
@@ -207,9 +199,6 @@ object ScreenCodec {
 
     const val TAG_SIZE = 16
 }
-
-/** Receive window for the screen stream: enough to ride out a burst after a screen update. */
-private const val SCREEN_RECEIVE_BUFFER_BYTES = 512 * 1024
 
 private fun ByteArray.startsWithStartCode(): Boolean =
     size >= 4 &&

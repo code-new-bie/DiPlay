@@ -826,7 +826,6 @@ class CarPlayHostActivity : ComponentActivity() {
         dismissClusterPresentation()
         mainHandler.removeCallbacks(applyDisplaySize)
         mainHandler.removeCallbacks(expireOldLogLines)
-        mainHandler.removeCallbacks(repeatAppearanceSync)
         currentSurface?.let { surface ->
             sink?.clearSurface(SCREEN_TYPE_MAIN, surface)
             sink?.clearSurface(SCREEN_TYPE_ALT, surface)
@@ -3174,7 +3173,6 @@ class CarPlayHostActivity : ComponentActivity() {
                     CarPlayBackgroundSession.active = true
                     reconnectAttempts = 0
                     syncAirPlayDarkMode()
-                    scheduleAppearanceRepeats()
                     if (menuOpen) return@runOnUiThread
                     appendLog("AirPlay session active")
                 }
@@ -3182,7 +3180,6 @@ class CarPlayHostActivity : ComponentActivity() {
 
             override fun onSessionEnded(session: AirPlaySession) {
                 runOnUiThread {
-                    mainHandler.removeCallbacks(repeatAppearanceSync)
                     updateBydCallUi()
                     CarPlayBackgroundSession.active = false
                     if (menuOpen || controllerGeneration != restartGeneration) {
@@ -3386,22 +3383,6 @@ class CarPlayHostActivity : ComponentActivity() {
             appendLog("Connection could not start: ${error.javaClass.simpleName}")
             shutdown(false, "foreground service could not start")
             setConnectionStage(getString(R.string.could_not_start_carplay_return_to_diplay_and_check_app_per))
-        }
-    }
-
-    /**
-     * The iPhone can discard an appearance command that arrives before the CarPlay display stream
-     * is up, which is exactly when the session-start sync fires. Repeating the current value a
-     * couple of times later costs nothing and covers that window.
-     */
-    private val repeatAppearanceSync = Runnable {
-        if (!shuttingDown.get()) syncAirPlayDarkMode()
-    }
-
-    private fun scheduleAppearanceRepeats() {
-        mainHandler.removeCallbacks(repeatAppearanceSync)
-        APPEARANCE_SYNC_REPEAT_DELAYS_MS.forEach {
-            mainHandler.postDelayed(repeatAppearanceSync, it)
         }
     }
 
@@ -3877,7 +3858,6 @@ class CarPlayHostActivity : ComponentActivity() {
         const val DISPLAY_CHANGE_DEBOUNCE_MILLIS = 500L
 
         /** Repeats of the session-start appearance command, after the display stream is up. */
-        val APPEARANCE_SYNC_REPEAT_DELAYS_MS = longArrayOf(2_000L, 5_000L)
         const val RECONNECT_DELAY_MILLIS = 2_000L
         const val IAP_TUNNEL_RECONNECT_DELAY_MILLIS = 15_000L
         const val CONTROLLER_CLOSE_TIMEOUT_MILLIS = 4_000L
