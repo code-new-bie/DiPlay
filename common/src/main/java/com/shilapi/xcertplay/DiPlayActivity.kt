@@ -79,6 +79,12 @@ class DiPlayActivity : ComponentActivity() {
     private val bluetoothPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) choosePhone() else permissionHelp(getString(R.string.nearby_devices), getString(R.string.allow_nearby_devices_so_diplay_can_connect_to_your_paired))
     }
+    private val locationPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        if (hasPreciseLocation()) return@registerForActivityResult reconnectForLocation()
+        AirPlayPersistence.saveLocationReportingEnabled(this, false)
+        render()
+        permissionHelp(getString(R.string.location), getString(R.string.allow_precise_location_for_diplay_in_the_head_unit_s_app_p))
+    }
     private val export = registerForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
         if (uri != null) exportDiagnostics(uri)
     }
@@ -275,6 +281,18 @@ class DiPlayActivity : ComponentActivity() {
                 AirPlayPersistence.saveHideTopBar(this, it); AirPlayPersistence.saveHideBottomBar(this, it)
             }
         }
+        section(content, getString(R.string.location), R.drawable.ic_dp_navigation) { card ->
+            toggle(card, getString(R.string.report_location_to_iphone),
+                getString(R.string.sends_precise_android_location_as_carplay_gps_data_when_th),
+                AirPlayPersistence.loadLocationReportingEnabled(this)) {
+                AirPlayPersistence.saveLocationReportingEnabled(this, it)
+                if (it && !hasPreciseLocation()) {
+                    locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+                } else {
+                    reconnectForLocation()
+                }
+            }
+        }
         if (BydSettingsAvailability.available(this)) section(content, getString(R.string.byd_settings), R.drawable.ic_dp_navigation) { card ->
             toggle(card, getString(R.string.byd_hide_stock_call_ui),
                 getString(R.string.byd_hide_stock_call_ui_description),
@@ -390,7 +408,23 @@ class DiPlayActivity : ComponentActivity() {
                     lowCharge.indexOf(BydOutputSettings.lowChargePercent(this)).coerceAtLeast(0), reconnects = false) {
                     BydOutputSettings.setLowChargePercent(this, lowCharge[it])
                 }
-                if (BydOutputSettings.clusterStreamPause(this) || BydOutputSettings.batteryToIphone(this)) checkAdbAccess(mayAsk = false)
+                toggle(card, getString(R.string.wheel_speed_for_tunnels),
+                    getString(R.string.wheel_speed_for_tunnels_description),
+                    BydOutputSettings.wheelSpeedToIphone(this)) {
+                    BydOutputSettings.setWheelSpeedToIphone(this, it)
+                    if (it) checkAdbAccess(mayAsk = true)
+                    if (CarPlayBackgroundSession.hasSession()) connect(AirPlayPersistence.loadWirelessEnabled(this))
+                }
+                toggle(card, getString(R.string.video_while_parked),
+                    getString(R.string.video_while_parked_description),
+                    BydOutputSettings.videoWhileParked(this)) {
+                    BydOutputSettings.setVideoWhileParked(this, it)
+                    if (it) checkAdbAccess(mayAsk = true)
+                    if (CarPlayBackgroundSession.hasSession()) connect(AirPlayPersistence.loadWirelessEnabled(this))
+                }
+                if (BydOutputSettings.clusterStreamPause(this) || BydOutputSettings.batteryToIphone(this) ||
+                    BydOutputSettings.wheelSpeedToIphone(this) || BydOutputSettings.videoWhileParked(this))
+                    checkAdbAccess(mayAsk = false)
                 card.addView(button(getString(R.string.apply_and_reconnect), false) {
                     if (BydOutputSettings.batteryToIphone(this)) {
                         checkAdbAccess(mayAsk = true, reconnectWhenReady = true)
@@ -401,6 +435,13 @@ class DiPlayActivity : ComponentActivity() {
             }
         }
         section(content, getString(R.string.home_section_audio), R.drawable.ic_dp_display) { card ->
+            if (resources.getBoolean(R.bool.config_advanced_audio_channel_mapping)) {
+                toggle(card, getString(R.string.advanced_audio_channel_mapping),
+                    getString(R.string.use_usage_content_type_routing_instead_of_stream_type),
+                    AirPlayPersistence.loadAdvancedAudioChannelMapping(this)) {
+                    AirPlayPersistence.saveAdvancedAudioChannelMapping(this, it)
+                }
+            }
             mediaChannelControl(card)
             navigationChannelControl(card)
         }
@@ -715,16 +756,15 @@ class DiPlayActivity : ComponentActivity() {
 
     private fun localMfiDirectory(): File = File(noBackupFilesDir, LocalMfiAuthenticationClient.DIRECTORY)
 
-    /** Media output: the full 1-40 channel range is selectable, never probed. */
     private fun mediaChannelControl(parent: LinearLayout) {
         val summary: (Int) -> String = {
-            getString(R.string.home_choice_summary, getString(R.string.home_media_channel_label), channelLabel(it))
+            getString(R.string.contrib_audio_home_choice_summary, getString(R.string.contrib_audio_home_media_channel_label), channelLabel(it))
         }
         val control = button(summary(AirPlayPersistence.loadMediaAudioChannel(this)), false) {}
         control.setOnClickListener {
             val current = AirPlayPersistence.loadMediaAudioChannel(this)
             showChannelDialog(
-                title = getString(R.string.home_media_channel_label),
+                title = getString(R.string.contrib_audio_home_media_channel_label),
                 current = current,
                 navigation = false,
                 onApply = { value -> applyMediaChannel(value, current, control, summary) },
@@ -733,46 +773,41 @@ class DiPlayActivity : ComponentActivity() {
         parent.addView(control, matchButton(0, 60))
     }
 
-    /** Navigation guidance output: the full 1-40 channel range is selectable, never probed. */
     private fun navigationChannelControl(parent: LinearLayout) {
         val summary: (Int) -> String = {
-            getString(R.string.home_choice_summary, getString(R.string.home_nav_channel_label), channelLabel(it))
+            getString(R.string.contrib_audio_home_choice_summary, getString(R.string.contrib_audio_home_nav_channel_label), channelLabel(it))
         }
         val control = button(summary(AirPlayPersistence.loadNavigationAudioChannel(this)), false) {}
         control.setOnClickListener {
             val current = AirPlayPersistence.loadNavigationAudioChannel(this)
             showChannelDialog(
-                title = getString(R.string.home_nav_channel_label),
+                title = getString(R.string.contrib_audio_home_nav_channel_label),
                 current = current,
                 navigation = true,
                 onApply = { value -> applyNavigationChannel(value, current, control, summary) },
             )
         }
         parent.addView(control, matchButton(0, 60))
-        parent.addView(label(getString(R.string.home_nav_channel_note), 14, MUTED).apply {
+        parent.addView(label(getString(R.string.contrib_audio_home_nav_channel_note), 14, MUTED).apply {
             setPadding(0, dp(8), 0, dp(18))
         })
     }
 
-    /**
-     * Offers all 0-40 channel numbers. Tapping an entry previews it through the same legacy
-     * stream route used for CarPlay; 0 uses the media or navigation usage-based route.
-     */
     private fun showChannelDialog(title: String, current: Int, navigation: Boolean, onApply: (Int) -> Unit) {
         val preview = AudioChannelPreview { channel ->
-            toast(getString(R.string.home_channel_preview_unavailable, channel))
+            toast(getString(R.string.contrib_audio_home_channel_preview_unavailable, channel))
         }
-        val labels = (0..40).map(Int::toString).toTypedArray()
-        var selection = current.coerceIn(0, 40)
+        val labels = (0..10).map(Int::toString).toTypedArray()
+        var selection = current.coerceIn(0, 10)
         AlertDialog.Builder(this).setTitle(title)
             .setSingleChoiceItems(labels, selection) { _, which ->
                 selection = which
                 preview.play(which, navigation)
             }
-            .setPositiveButton(if (CarPlayBackgroundSession.hasSession()) getString(R.string.home_btn_apply_reconnect) else getString(R.string.home_btn_save)) { _, _ ->
+            .setPositiveButton(if (CarPlayBackgroundSession.hasSession()) getString(R.string.apply_and_reconnect) else getString(R.string.save)) { _, _ ->
                 onApply(selection)
             }
-            .setNegativeButton(getString(R.string.home_btn_cancel), null)
+            .setNegativeButton(getString(R.string.cancel), null)
             .setOnDismissListener { preview.close() }
             .show()
     }
@@ -947,6 +982,14 @@ class DiPlayActivity : ComponentActivity() {
         BydAdbAccess.State.NOT_APPROVED -> getString(R.string.adb_not_approved)
         BydAdbAccess.State.ADB_OFF -> getString(R.string.adb_off)
         BydAdbAccess.State.PAIRING_ONLY -> getString(R.string.adb_pairing_only)
+    }
+
+    private fun hasPreciseLocation() =
+        checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+    // The location component is part of the iAP2 identification, so a running session reconnects.
+    private fun reconnectForLocation() {
+        if (CarPlayBackgroundSession.hasSession()) connect(AirPlayPersistence.loadWirelessEnabled(this))
     }
 
     // The cluster screen is described at connection time, so a running session reconnects over

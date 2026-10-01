@@ -31,7 +31,7 @@ internal data class AudioChannelSelection(
  * Each selection carries the [AudioChannel] / [AudioContentType] pair used for usage-based
  * AudioAttributes, plus the stream type used when the stream-type AudioTrack path is active.
  * Guidance resolves to [AudioChannel.NAVIGATION]. Automotive routing keeps compatibility
- * audio on the media bus, matching the fork's existing routing policy.
+ * audio on the media bus, so it receives the configured media buffer and output route.
  */
 internal object AudioChannelMapper {
     const val STREAM_TYPE_MAIN_HIGH_AUDIO = 102

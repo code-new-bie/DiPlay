@@ -84,6 +84,7 @@ import com.shilapi.xcertplay.orchestration.isManualHotspotChannelCompatible
 import com.shilapi.xcertplay.transport.Iap2IdentificationConfig
 import com.shilapi.xcertplay.transport.Iap2LocationProvider
 import com.shilapi.xcertplay.transport.UsbDeviceId
+import com.shilapi.xcertplay.transport.VehicleSpeedLocationProvider
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.ArrayDeque
@@ -145,6 +146,7 @@ class CarPlayHostActivity : ComponentActivity() {
             locationInformationEnabled = locationReportingEnabled,
             vehicleStatusEnabled = com.shilapi.xcertplay.hud.BydOutputSettings.batteryToIphone(this),
             chargingConnectors = com.shilapi.xcertplay.hud.BydOutputSettings.chargingConnectors(this),
+            vehicleSpeedEnabled = locationReportingEnabled && com.shilapi.xcertplay.hud.BydOutputSettings.wheelSpeedToIphone(this),
         ),
         label = normalizedCarPlayName(),
         hostName = "diplay-" + DiPlayBootstrap.deviceId(airPlayIdentity).replace(":", "").lowercase(),
@@ -2968,6 +2970,7 @@ class CarPlayHostActivity : ComponentActivity() {
             model = normalizedModel(),
             oemLabel = oemLabel,
             icons = listOf(loadAirPlayIcon()),
+            videoInCar = com.shilapi.xcertplay.hud.BydOutputSettings.videoWhileParked(this),
         )
     }
 
@@ -3135,6 +3138,9 @@ class CarPlayHostActivity : ComponentActivity() {
             videoHeight = videoHeight,
             preferSoftwareHevcDecoder = hevcSoftwareDecoderEnabled,
             advancedAudioChannelMapping = advancedAudioChannelMapping,
+            // Media focus is owned by CarPlayMediaKeys so steering-wheel keys keep reaching
+            // DiPlay; a second focus request from the renderers would compete with it.
+            audioFocusEnabled = false,
             mediaChannel = mediaAudioChannel,
             navigationChannel = navigationAudioChannel,
             context = this,
@@ -3297,10 +3303,13 @@ class CarPlayHostActivity : ComponentActivity() {
         val config = createRuntimeConfig()
         val airPlayConfig = createAirPlayConfig(size)
         val locationProvider: Iap2LocationProvider? =
-            if (config.locationReportingEnabled) {
-                AndroidCarPlayLocationProvider(this)
-            } else {
-                null
+            when {
+                !config.locationReportingEnabled -> null
+                config.identification.vehicleSpeedEnabled -> VehicleSpeedLocationProvider(
+                    AndroidCarPlayLocationProvider(this),
+                    com.shilapi.xcertplay.hud.BydNavigationOutputs.wheelSpeed(applicationContext),
+                )
+                else -> AndroidCarPlayLocationProvider(this)
             }
         appendLog(
             "Starting CarPlay controller at ${size.width}x${size.height} -> " +
@@ -3311,7 +3320,8 @@ class CarPlayHostActivity : ComponentActivity() {
                 "video=${if (airPlayConfig.hevc) "HEVC" else "H.264"} " +
                 "decoder=${if (airPlayConfig.hevc && hevcSoftwareDecoderEnabled) "software" else "hardware"} " +
                 "microphone=${airPlayConfig.microphone} " +
-                "location=${if (config.locationReportingEnabled) "enabled" else "disabled"} " +
+                "location=${if (config.locationReportingEnabled) "enabled" else "disabled"}" +
+                "${if (config.identification.vehicleSpeedEnabled) "+wheel-speed" else ""} " +
                 "mfi=${mfiTargetLabel(config.mfiTarget)}",
         )
         Log.i(
@@ -3362,6 +3372,7 @@ class CarPlayHostActivity : ComponentActivity() {
             if (wirelessEnabled) DiPlayPreferences.phoneAddress(this) else null) { message ->
             mediaDiagnosticLog?.append(formattedLogLine(message, System.currentTimeMillis()))
         }
+        if (airPlayConfig.videoInCar) CarPlayVideo.attach(this, next)
         CarPlayBackgroundSession.store(next, renderer, size.width, size.height, this) { completion ->
             runOnUiThread {
                 shutdown(terminateProcess = false, reason = "DiPlay disconnect", completion = completion)

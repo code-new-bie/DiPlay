@@ -173,8 +173,11 @@ class WifiP2pGroupManager(
                         throw IOException("Could not record Wi-Fi P2P group ownership")
                     }
                     val request = CreateRequest()
-                    // WifiP2pConfig.getNetworkName() is API 30; creation also supports API 29.
-                    requestedName = if (config != null) credentials.ssid else null
+                    // Keep the requested SSID from the value we supplied. Some Android 10
+                    // vendor frameworks omit WifiP2pConfig.getNetworkName(), even though they
+                    // support the API 29 Builder methods used above. Reading config.networkName
+                    // therefore throws NoSuchMethodError on those devices.
+                    requestedName = if (config == null) null else credentials.ssid
                     synchronized(stateLock) {
                         ensureStartActiveLocked(attempt)
                         attempt.request = request
