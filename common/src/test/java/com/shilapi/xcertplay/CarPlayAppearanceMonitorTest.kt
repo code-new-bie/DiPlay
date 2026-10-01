@@ -79,14 +79,16 @@ class CarPlayAppearanceMonitorTest {
     }
 
     @Test
-    fun liveAndroidUiModeWinsOverTheVehicleKeys() {
-        // The regression case: the keys claim light while the system mode is dark.
+    fun vehicleKeysWinEvenWhenAndroidDefinesAMode() {
+        // The keys flip with the car while uiMode trails by about a second: the keys must decide,
+        // otherwise the head unit reports the previous appearance first.
         provider.values["sys_screen_mode"] = "1"
         liveUiMode = Configuration.UI_MODE_NIGHT_YES
         start(Configuration.UI_MODE_NIGHT_YES)
         idle(2_000)
-        assertEquals(listOf(true), changes)
-        assertTrue(diagnostics.last().startsWith("CarPlay appearance source=uiMode"))
+        assertEquals(listOf(false), changes)
+        assertTrue(diagnostics.last().startsWith("CarPlay appearance source=vehicle"))
+        assertTrue(diagnostics.last().contains("vehicle=light resolved=light"))
     }
 
     @Test

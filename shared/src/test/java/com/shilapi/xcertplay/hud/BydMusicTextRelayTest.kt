@@ -32,6 +32,9 @@ class BydMusicTextRelayTest {
     private var accepted = true
     private var result = 0
     private var throwOnWrite = false
+    private val commands = mutableListOf<String>()
+    private var sourceResult = 0
+    private var stateResult = 0
 
     @Before
     fun setUp() {
@@ -63,10 +66,15 @@ class BydMusicTextRelayTest {
             },
             writerFactory = {
                 if (failSdk) throw SecurityException("SDK unavailable")
-                MusicTextWriter { text ->
-                    if (throwOnWrite) throw IllegalStateException("SDK write failed")
-                    writes += text
-                    result
+                object : MusicTextWriter {
+                    override fun source(value: Int): Int { commands += "source=$value"; return sourceResult }
+                    override fun state(value: Int): Int { commands += "state=$value"; return stateResult }
+                    override fun send(text: String): Int {
+                        commands += "text"
+                        if (throwOnWrite) throw java.lang.reflect.InvocationTargetException(IllegalStateException("SDK write failed"))
+                        writes += text
+                        return result
+                    }
                 }
             },
             diagnostic = logs::add,
@@ -283,6 +291,70 @@ class BydMusicTextRelayTest {
         idle(1000)
         assertTrue(writes.isEmpty())
         assertEquals(1, logs.count { "forwarding disabled" in it })
+    }
+
+    @Test
+    fun sdkExceptionReportsEachWrappedCauseForDiagnosis() {
+        start()
+        throwOnWrite = true
+        title("line")
+        idle(150)
+        // Reflection wraps the real SDK failure: the report must name the stage and walk to the
+        // inner exception, which is what the on-car failure needs in order to be identified.
+        assertTrue(logs.any { "stage=text" in it && "java.lang.reflect.InvocationTargetException" in it })
+        assertTrue(logs.any { "java.lang.IllegalStateException" in it })
+        assertTrue(writes.isEmpty())
+    }
+
+    @Test
+    fun sourceAndPlayingPrecedeTextAndResumeRestoresPlaying() {
+        val relay = start()
+        title("line one"); idle(150)
+        title("line two"); idle(150)
+        assertEquals(listOf("source=11", "state=1", "text", "text"), commands)
+        relay.updateUsage(true, false, true); idle()
+        assertEquals("state=2", commands.last())
+        relay.updateUsage(true, true, true); idle()
+        title("line three"); idle(150)
+        assertEquals(listOf("state=1", "text"), commands.takeLast(2))
+        relay.updateUsage(true, true, false); idle()
+        relay.updateUsage(true, true, true); idle(150)
+        assertEquals(listOf("source=11", "state=1", "text"), commands.takeLast(3))
+    }
+
+    @Test
+    fun failedSourcePreventsPlayingAndTextWithoutRetry() {
+        start()
+        sourceResult = -1
+        title("line"); idle(150)
+        title("next"); idle(1000)
+        assertEquals(listOf("source=11"), commands)
+        assertTrue(writes.isEmpty())
+        assertTrue(logs.any { "stage=source" in it })
+    }
+
+    @Test
+    fun failedPlayingPreventsText() {
+        start()
+        stateResult = -2
+        title("line"); idle(150)
+        assertEquals(listOf("source=11", "state=1"), commands)
+        assertTrue(writes.isEmpty())
+    }
+
+    @Test
+    fun disabledOwnerStopsButFocusLossAndDisconnectDoNotOverwriteOthers() {
+        val relay = start()
+        title("line"); idle(150)
+        val count = commands.size
+        relay.updateUsage(true, false, false); idle()
+        relay.updateUsage(false, false, false); idle()
+        assertEquals(count, commands.size)
+        val next = create()
+        next.updateUsage(true, true, true); idle()
+        title("new"); idle(150)
+        BydMusicTextSettings.setEnabled(app, false); idle()
+        assertEquals("state=3", commands.last())
     }
 
     @Test

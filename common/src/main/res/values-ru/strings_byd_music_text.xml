@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="byd_forward_music_text">Передавать текст музыки на приборы (экспериментально)</string>
-    <string name="byd_forward_music_text_description">На совместимых устройствах BYD с Android 10 передаёт текст музыки от телефона по Bluetooth во время воспроизведения в CarPlay. Строки песни появятся, только если приложение обновляет их по Bluetooth. Кнопки руля сохраняются, ADB не требуется. Подключайте по Bluetooth только один телефон.</string>
+    <string name="byd_forward_music_text_description">На совместимых устройствах BYD с Android 10 передаёт текст музыки от телефона по Bluetooth во время воспроизведения в CarPlay. Строки песни появятся, только если приложение обновляет их по Bluetooth. Приборы переключаются на общий источник музыки и следуют за воспроизведением или паузой. Кнопки руля сохраняются, ADB не требуется. Подключайте по Bluetooth только один телефон.</string>
 </resources>

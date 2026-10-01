@@ -684,7 +684,15 @@ class AirPlaySession(
                 val parsed = RtspMessage.parseMessages(plaintext)
                 plaintext = parsed.rest
                 for (message in parsed.messages) {
-                    if (message.method.startsWith("RTSP/") || message.method.startsWith("HTTP/")) continue
+                    if (message.method.startsWith("RTSP/") || message.method.startsWith("HTTP/")) {
+                        // Response to an accessory command (setNightMode, hidSendReport, ...). This
+                        // is the only wire-level evidence that the phone accepted or rejected it.
+                        debugLog(
+                            "airplay event response ${message.method} ${message.path} " +
+                                "cseq=${message.headers["cseq"] ?: "-"} body=${message.body.size}",
+                        )
+                        continue
+                    }
                     debugLog(
                         "airplay event rx ${message.method} ${message.path} cseq=${message.headers["cseq"] ?: "-"} body=${message.body.size}",
                     )

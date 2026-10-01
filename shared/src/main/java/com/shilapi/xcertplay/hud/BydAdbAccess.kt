@@ -14,6 +14,10 @@ object BydAdbAccess {
         val dashboardShowsMap: Boolean = true,
         val batteryPercent: Double? = null,
         val rangeKm: Int? = null,
+        /** Which identity the head unit's own adbd gave DiPlay: uid=2000(shell) or uid=0(root). */
+        val shellIdentity: String? = null,
+        /** `ro.debuggable`; 1 means `adb root` is available on this build. */
+        val debuggable: String? = null,
     )
 
     /** Blocking: run off the main thread. [mayAsk] lets the car show its approval dialog for DiPlay's key. */
@@ -35,6 +39,18 @@ object BydAdbAccess {
         val mode = BydClusterNaviMode.parseRead(shell(BydClusterNaviMode.READ_COMMAND))
         val battery = BydBattery.read(shell)
         battery?.let { BydBatteryStatus.accept(context, it) }
-        return Status(State.READY, mode, mode?.showsMap != false, battery?.percent, battery?.rangeKm)
+        // Report what this adbd actually allows: a signature check cannot be bypassed with shell,
+        // so the identity decides whether an ADB-driven grant is even worth attempting.
+        val identity = shell("id")?.trim()?.take(64)
+        val debuggable = shell("getprop ro.debuggable")?.trim()?.take(8)
+        return Status(
+            State.READY,
+            mode,
+            mode?.showsMap != false,
+            battery?.percent,
+            battery?.rangeKm,
+            shellIdentity = identity,
+            debuggable = debuggable,
+        )
     }
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="byd_forward_music_text">转发仪表歌曲文字（实验性）</string>
-    <string name="byd_forward_music_text_description">在兼容的 Android 10 比亚迪车机上，CarPlay 播放音乐时转发手机通过蓝牙提供的歌曲文字。仅当音乐 App 通过蓝牙逐句更新歌词时才显示歌词。保留方向盘按键，无需 ADB；蓝牙只连接一部手机。</string>
+    <string name="byd_forward_music_text_description">在兼容的 Android 10 比亚迪车机上，CarPlay 播放音乐时转发手机通过蓝牙提供的歌曲文字。仅当音乐 App 通过蓝牙逐句更新歌词时才显示歌词。仪表会切换到通用音乐来源，并跟随播放/暂停状态。保留方向盘按键，无需 ADB；蓝牙只连接一部手机。</string>
 </resources>

@@ -16,7 +16,7 @@ import java.io.Closeable
 
 /**
  * Relays the stock AVRCP title through the instrument SDK while DiPlay owns music focus.
- * Does not request focus, change the media source, send Bluetooth commands, or obtain lyrics.
+ * Sets the instrument's generic music source; does not change Android audio routing or request focus.
  * One worker is created only for enabled, connected sessions; SDK calls never use the audio thread.
  */
 class BydMusicTextRelay internal constructor(
@@ -52,7 +52,7 @@ class BydMusicTextRelay internal constructor(
         active.worker.handler.post {
             if (!active.current()) return@post
             if (!next.focusHeld) active.resetSent()
-            if (!next.playing) active.clearText() else active.schedule()
+            if (!next.playing) { active.clearText(); active.pause() } else active.schedule()
         }
     }
 
@@ -106,6 +106,9 @@ class BydMusicTextRelay internal constructor(
         private var failed = false
         private var title: String? = null
         private var lastSent: String? = null
+        private var instrumentPrepared = false
+        private var instrumentState: Int? = null
+        private var stage = "initialize"
         private var events = 0
         private var changes = 0
         private var writes = 0
@@ -158,7 +161,12 @@ class BydMusicTextRelay internal constructor(
                 @Suppress("DEPRECATION")
                 app.registerReceiver(receiver, IntentFilter(TRACK_EVENT), Manifest.permission.BLUETOOTH, worker.handler)
                 registered = true
-                report("receiver and instrument SDK ready; output is not an instrument acknowledgement")
+                report(
+                    "receiver and instrument SDK ready; " +
+                        "getPermission=${permissionState(app, INSTRUMENT_PERMISSION)} " +
+                        "setPermission=${permissionState(app, INSTRUMENT_SET_PERMISSION)}; " +
+                        "output is not an instrument acknowledgement",
+                )
             } catch (error: Exception) {
                 fail(error)
             } catch (error: LinkageError) {
@@ -173,7 +181,24 @@ class BydMusicTextRelay internal constructor(
             scheduled = false
         }
 
-        fun resetSent() { lastSent = null }
+        fun resetSent() { lastSent = null; instrumentPrepared = false; instrumentState = null }
+
+        private fun command(name: String, action: () -> Int): Boolean {
+            stage = name
+            val result = action()
+            if (result == 0) return true
+            fail(IllegalStateException(), "instrument rejected stage=$name result=$result")
+            return false
+        }
+
+        fun pause() {
+            if (!current() || failed || usage.playing || !usage.focusHeld || !instrumentPrepared || instrumentState == 2) return
+            try {
+                val target = writer ?: return
+                if (command("pause") { target.state(2) }) instrumentState = 2
+            } catch (error: Exception) { fail(error) }
+            catch (error: LinkageError) { fail(error) }
+        }
 
         fun schedule() {
             if (!current() || failed || !usage.playing || !usage.focusHeld || title == null) {
@@ -196,14 +221,21 @@ class BydMusicTextRelay internal constructor(
                 if (next == lastSent) return
                 // Recheck after the Bluetooth binder call. Focus/connection can change on another thread.
                 if (!current() || pendingRevision != revision || !usage.playing || !usage.focusHeld) return
-                val result = writer?.send(next) ?: return
-                if (result != 0) {
-                    fail(IllegalStateException("instrument result=$result"), "instrument rejected result=$result")
-                    return
+                val target = writer ?: return
+                if (!instrumentPrepared) {
+                    if (!command("source") { target.source(11) }) return
+                    instrumentPrepared = true
                 }
+                if (!current() || pendingRevision != revision || !usage.playing || !usage.focusHeld) return
+                if (instrumentState != 1) {
+                    if (!command("playing") { target.state(1) }) return
+                    instrumentState = 1
+                }
+                if (!current() || pendingRevision != revision || !usage.playing || !usage.focusHeld) return
+                if (!command("text") { target.send(next) }) return
                 lastSent = next
                 writes++
-                if (writes == 1 || writes % 25 == 0) report("calls=$writes received=$events changed=$changes result=$result")
+                if (writes == 1 || writes % 25 == 0) report("calls=$writes received=$events changed=$changes source=11 state=1 result=0")
             } catch (error: Exception) {
                 fail(error)
             } catch (error: LinkageError) {
@@ -219,8 +251,24 @@ class BydMusicTextRelay internal constructor(
             source = null
             writer = null
             report(message)
+            // Preserve the underlying SDK failure without logging lyric text from exception messages.
+            // A permission denial is the one message worth keeping: it names the gate that refused
+            // the write and never contains song text.
+            var cause = error
+            repeat(8) {
+                report("failure stage=$stage type=${cause.javaClass.name} frames=" +
+                    cause.stackTrace.take(6).joinToString(";") { frame ->
+                        "${frame.className}.${frame.methodName}:${frame.lineNumber}"
+                    } + denial(cause))
+                val next = cause.cause ?: return
+                if (next === cause) return
+                cause = next
+            }
             // No repeating retries after SDK/permission failure. Reconnect or toggle to try again.
         }
+
+        private fun denial(cause: Throwable): String =
+            if (cause is SecurityException) " message=${cause.message?.take(200) ?: "none"}" else ""
 
         private fun releaseReceiver() {
             if (registered) runCatching { app.unregisterReceiver(receiver) }
@@ -230,6 +278,13 @@ class BydMusicTextRelay internal constructor(
         fun stop() {
             if (stopped) return
             stopped = true
+            // Only clear a display we prepared while this controller still owns music focus.
+            // A replaced or disconnected controller must not overwrite the next player's display.
+            if (!failed && instrumentPrepared && run == null && usage.connected && usage.focusHeld) {
+                try { writer?.let { command("stop") { it.state(3) } } }
+                catch (error: Exception) { fail(error) }
+                catch (error: LinkageError) { fail(error) }
+            }
             clearText()
             releaseReceiver()
             runCatching { source?.close() }
@@ -245,6 +300,13 @@ class BydMusicTextRelay internal constructor(
         internal const val TRACK_EVENT = "android.bluetooth.avrcp-controller.profile.action.TRACK_EVENT"
         internal const val EXTRA_METADATA = "android.bluetooth.avrcp-controller.profile.extra.METADATA"
         internal const val INSTRUMENT_PERMISSION = "android.permission.BYDAUTO_INSTRUMENT_COMMON"
+
+        /** What BYDAutoInstrumentDevice.getSetPermission() returns: the gate the write path checks. */
+        internal const val INSTRUMENT_SET_PERMISSION = "android.permission.BYDAUTO_INSTRUMENT_SET"
+
+        internal fun permissionState(context: Context, permission: String): String =
+            if (context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) "granted"
+            else "denied"
         internal const val COALESCE_MS = 150L
 
         fun create(context: Context, expectedBluetoothAddress: String?, diagnostic: (String) -> Unit): BydMusicTextRelay {
@@ -266,7 +328,13 @@ class BydMusicTextRelay internal constructor(
                     val sdk = Class.forName("android.hardware.bydauto.instrument.BYDAutoInstrumentDevice")
                     val device = sdk.getMethod("getInstance", Context::class.java).invoke(null, app)
                     val method = sdk.getMethod("sendMusicName", String::class.java)
-                    MusicTextWriter { text -> (method.invoke(device, text) as Number).toInt() }
+                    val sourceMethod = sdk.getMethod("sendMusicSource", Int::class.javaPrimitiveType)
+                    val stateMethod = sdk.getMethod("sendMusicState", Int::class.javaPrimitiveType)
+                    object : MusicTextWriter {
+                        override fun send(text: String) = (method.invoke(device, text) as Number).toInt()
+                        override fun source(value: Int) = (sourceMethod.invoke(device, value) as Number).toInt()
+                        override fun state(value: Int) = (stateMethod.invoke(device, value) as Number).toInt()
+                    }
                 },
                 diagnostic = diagnostic,
             )
@@ -297,5 +365,9 @@ class BydMusicTextRelay internal constructor(
 }
 
 internal interface MusicTextWorker : Closeable { val handler: Handler }
-internal fun interface MusicTextWriter { fun send(text: String): Int }
+internal fun interface MusicTextWriter {
+    fun send(text: String): Int
+    fun source(value: Int): Int = 0
+    fun state(value: Int): Int = 0
+}
 internal interface MusicTextSource : Closeable { fun accepts(): Boolean }

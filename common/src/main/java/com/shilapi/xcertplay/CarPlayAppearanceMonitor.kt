@@ -42,19 +42,11 @@ internal class CarPlayAppearanceMonitor(
             var dayOrNight: String? = null
             val mode = try {
                 screenMode = readValue("sys_screen_mode")
-                // A unit may publish only the day/night signal: read it when the mode is automatic
-                // or missing so the vehicle fallback still works on its own.
-                dayOrNight = if (screenMode == "0" || screenMode == null) {
-                    readValue("sys_day_or_night")
-                } else {
-                    null
-                }
+                dayOrNight = if (screenMode == "0") readValue("sys_day_or_night") else null
                 providerFailureLogged = false
-                if (screenMode == null && dayOrNight == null) {
-                    null
-                } else {
-                    resolveCarPlayDarkMode(uiMode, screenMode, dayOrNight)
-                }
+                // A unit that publishes no mode key at all is treated as unavailable, which keeps
+                // the Android uiMode fallback and the slower retry.
+                if (screenMode == null) null else resolveCarPlayDarkMode(uiMode, screenMode, dayOrNight)
             } catch (error: RuntimeException) {
                 if (!providerFailureLogged) {
                     Log.w(TAG, "Vehicle appearance unavailable; using Android uiMode", error)
@@ -68,8 +60,8 @@ internal class CarPlayAppearanceMonitor(
             val definedUiMode = (uiMode and Configuration.UI_MODE_NIGHT_MASK) !=
                 Configuration.UI_MODE_NIGHT_UNDEFINED
             val source = when {
-                definedUiMode -> "uiMode"
                 vehicleMode != null -> "vehicle"
+                definedUiMode -> "uiMode"
                 else -> "android_uidmode"
             }
             val status = "CarPlay appearance source=$source " +
@@ -160,7 +152,7 @@ internal class CarPlayAppearanceMonitor(
         fun vehicleDarkMode(screenMode: String?, dayOrNight: String?): Boolean? = when (screenMode) {
             "1" -> false
             "2" -> true
-            "0", null -> when (dayOrNight) {
+            "0" -> when (dayOrNight) {
                 "0" -> true
                 "1" -> false
                 else -> null

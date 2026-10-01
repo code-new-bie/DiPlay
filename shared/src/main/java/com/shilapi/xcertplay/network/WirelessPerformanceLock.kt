@@ -26,15 +26,25 @@ internal class WirelessPerformanceLock(
             report("Wi-Fi lock unavailable: no WifiManager on this head unit")
             return
         }
+        var failure: Throwable? = null
         lock = runCatching {
             manager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, TAG).apply {
                 setReferenceCounted(false)
                 acquire()
             }
-        }.onFailure { Log.w(TAG, "High-performance Wi-Fi lock unavailable", it) }.getOrNull()
+        }.onFailure {
+            failure = it
+            Log.w(TAG, "High-performance Wi-Fi lock unavailable", it)
+        }.getOrNull()
         report(
-            if (lock != null) "Wi-Fi high-performance lock held for this session"
-            else "Wi-Fi high-performance lock refused by this head unit",
+            if (lock != null) {
+                "Wi-Fi high-performance lock held for this session"
+            } else {
+                val error = failure
+                "Wi-Fi high-performance lock refused: " +
+                    (error?.let { "${it.javaClass.simpleName} ${it.message?.take(120) ?: ""}".trim() }
+                        ?: "createWifiLock returned null")
+            },
         )
     }
 

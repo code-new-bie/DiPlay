@@ -282,6 +282,13 @@ class DiPlayActivity : ComponentActivity() {
             toggle(card, getString(R.string.byd_forward_music_text),
                 getString(R.string.byd_forward_music_text_description),
                 BydMusicTextSettings.enabled(this)) { BydMusicTextSettings.setEnabled(this, it) }
+            // The ADB link is only used by the HUD, cluster and battery features, but its state is
+            // worth showing whenever the BYD section is: it reports the identity this head unit's
+            // adbd grants, which decides whether a permission can be granted over ADB at all.
+            adbStatus = label("", 14, MUTED).also { status ->
+                card.addView(status)
+            }
+            card.addView(button(getString(R.string.check_adb_access), false) { checkAdbAccess(mayAsk = true) }, matchButton(10, 56))
             if (BydOutputSettings.available(this)) {
                 toggle(card, getString(R.string.navigation_on_hud_and_instrument_cluster),
                     getString(R.string.show_phone_navigation_arrows_distance_and_street_names_on),
@@ -383,11 +390,7 @@ class DiPlayActivity : ComponentActivity() {
                     lowCharge.indexOf(BydOutputSettings.lowChargePercent(this)).coerceAtLeast(0), reconnects = false) {
                     BydOutputSettings.setLowChargePercent(this, lowCharge[it])
                 }
-                adbStatus = label("", 14, MUTED).also { status ->
-                    card.addView(status)
-                }
                 if (BydOutputSettings.clusterStreamPause(this) || BydOutputSettings.batteryToIphone(this)) checkAdbAccess(mayAsk = false)
-                card.addView(button(getString(R.string.check_adb_access), false) { checkAdbAccess(mayAsk = true) }, matchButton(10, 56))
                 card.addView(button(getString(R.string.apply_and_reconnect), false) {
                     if (BydOutputSettings.batteryToIphone(this)) {
                         checkAdbAccess(mayAsk = true, reconnectWhenReady = true)
@@ -937,6 +940,9 @@ class DiPlayActivity : ComponentActivity() {
             getString(R.string.adb_battery_reconnect).takeIf {
                 BydOutputSettings.batteryToIphone(this) && result.batteryPercent != null
             },
+            // Which identity this head unit's adbd granted: shell cannot pass a signature check.
+            result.shellIdentity?.let { "shell=$it" },
+            result.debuggable?.let { "ro.debuggable=$it" },
         ).joinToString(" ")
         BydAdbAccess.State.NOT_APPROVED -> getString(R.string.adb_not_approved)
         BydAdbAccess.State.ADB_OFF -> getString(R.string.adb_off)

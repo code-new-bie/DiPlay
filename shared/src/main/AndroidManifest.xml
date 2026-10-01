@@ -5,6 +5,9 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- createWifiLock(WIFI_MODE_FULL_HIGH_PERF) is refused without this; the lock keeps the
+         radio out of power save while a wireless CarPlay session runs. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission
         android:name="android.permission.NEARBY_WIFI_DEVICES"
         android:usesPermissionFlags="neverForLocation" />
@@ -13,6 +16,14 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BYDAUTO_INSTRUMENT_COMMON" />
+    <!--
+      The instrument write path checks BYDAutoInstrumentDevice.getSetPermission(), which names
+      android.permission.BYDAUTO_INSTRUMENT_SET. It is not defined by the platform manifest, so
+      the head unit grants it only if its own declaring app allows it; the relay reports whether
+      it was granted.
+    -->
+    <uses-permission android:name="android.permission.BYDAUTO_INSTRUMENT_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_INSTRUMENT_GET" />
     <uses-permission
         android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />

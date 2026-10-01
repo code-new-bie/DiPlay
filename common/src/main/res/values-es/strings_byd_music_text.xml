@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="byd_forward_music_text">Enviar texto musical al cuadro (experimental)</string>
-    <string name="byd_forward_music_text_description">En equipos BYD compatibles con Android 10, envía el texto musical del teléfono por Bluetooth mientras CarPlay reproduce música. La letra solo aparece si la app la actualiza por Bluetooth. Conserva los controles del volante y no requiere ADB. Conecta solo un teléfono por Bluetooth.</string>
+    <string name="byd_forward_music_text_description">En equipos BYD compatibles con Android 10, envía el texto musical del teléfono por Bluetooth mientras CarPlay reproduce música. La letra solo aparece si la app la actualiza por Bluetooth. El cuadro cambia a la fuente de música genérica y sigue la reproducción o la pausa. Conserva los controles del volante y no requiere ADB. Conecta solo un teléfono por Bluetooth.</string>
 </resources>

@@ -18,15 +18,15 @@ class DarkModeTest {
     }
 
     @Test
-    fun liveAndroidModeWinsOverTheVehicleKeys() {
-        // The head unit's own UI follows the system uiMode, and it is the source the iPhone
-        // accepted at connection time; the BYD keys must not override it.
-        assertTrue(resolveCarPlayDarkMode(Configuration.UI_MODE_NIGHT_YES, "1", "0"))
-        assertFalse(resolveCarPlayDarkMode(Configuration.UI_MODE_NIGHT_NO, "2", "1"))
+    fun vehicleKeysWinOverTheAndroidMode() {
+        // The keys flip with the car while uiMode trails by about a second, so uiMode must not
+        // decide the appearance the head unit reports to the iPhone.
+        assertFalse(resolveCarPlayDarkMode(Configuration.UI_MODE_NIGHT_YES, "1", "0"))
+        assertTrue(resolveCarPlayDarkMode(Configuration.UI_MODE_NIGHT_NO, "2", "1"))
     }
 
     @Test
-    fun vehicleKeysDriveTheModeWhenAndroidDoesNotDefineOne() {
+    fun vehicleKeysDriveTheModeForEverySignal() {
         val undefined = Configuration.UI_MODE_NIGHT_UNDEFINED
         assertFalse(resolveCarPlayDarkMode(undefined, "1", null))
         assertTrue(resolveCarPlayDarkMode(undefined, "2", null))
@@ -35,10 +35,10 @@ class DarkModeTest {
     }
 
     @Test
-    fun dayNightSignalAloneIsEnoughWhenTheModeKeyIsMissing() {
-        val undefined = Configuration.UI_MODE_NIGHT_UNDEFINED
-        assertTrue(resolveCarPlayDarkMode(undefined, null, "0"))
-        assertFalse(resolveCarPlayDarkMode(undefined, null, "1"))
+    fun androidModeIsTheFallbackWhenTheModeKeyIsMissing() {
+        assertTrue(resolveCarPlayDarkMode(Configuration.UI_MODE_NIGHT_YES, null, "1"))
+        assertFalse(resolveCarPlayDarkMode(Configuration.UI_MODE_NIGHT_NO, null, "0"))
+        assertTrue(resolveCarPlayDarkMode(Configuration.UI_MODE_NIGHT_YES, "0", null))
     }
 
     @Test
