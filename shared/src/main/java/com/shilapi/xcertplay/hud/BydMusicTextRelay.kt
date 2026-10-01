@@ -323,19 +323,9 @@ class BydMusicTextRelay internal constructor(
                     }
                 },
                 sourceFactory = { BydBluetoothMusicSource(app, expectedBluetoothAddress) },
-                writerFactory = {
-                    check(app.checkSelfPermission(INSTRUMENT_PERMISSION) == PackageManager.PERMISSION_GRANTED)
-                    val sdk = Class.forName("android.hardware.bydauto.instrument.BYDAutoInstrumentDevice")
-                    val device = sdk.getMethod("getInstance", Context::class.java).invoke(null, app)
-                    val method = sdk.getMethod("sendMusicName", String::class.java)
-                    val sourceMethod = sdk.getMethod("sendMusicSource", Int::class.javaPrimitiveType)
-                    val stateMethod = sdk.getMethod("sendMusicState", Int::class.javaPrimitiveType)
-                    object : MusicTextWriter {
-                        override fun send(text: String) = (method.invoke(device, text) as Number).toInt()
-                        override fun source(value: Int) = (sourceMethod.invoke(device, value) as Number).toInt()
-                        override fun state(value: Int) = (stateMethod.invoke(device, value) as Number).toInt()
-                    }
-                },
+                // The in-process SDK is refused for an ordinary app's uid, so the write goes through
+                // the adb shell user (uid 2000) via a helper. See AdbInstrumentWriter.
+                writerFactory = { AdbInstrumentWriter(app, diagnostic = diagnostic) },
                 diagnostic = diagnostic,
             )
         }
