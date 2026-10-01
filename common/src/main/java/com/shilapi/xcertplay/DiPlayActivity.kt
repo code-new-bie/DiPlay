@@ -386,53 +386,55 @@ class DiPlayActivity : ComponentActivity() {
                         }
                     }
                 }
-                toggle(card, getString(R.string.car_battery_for_the_iphone),
-                    getString(R.string.car_battery_for_the_iphone_description),
-                    BydOutputSettings.batteryToIphone(this)) {
-                    BydOutputSettings.setBatteryToIphone(this, it)
-                    if (it) {
-                        checkAdbAccess(mayAsk = true, reconnectWhenReady = CarPlayBackgroundSession.hasSession())
-                    } else if (CarPlayBackgroundSession.hasSession()) {
-                        connect(AirPlayPersistence.loadWirelessEnabled(this))
-                    }
-                }
-                val connectors = EvChargingConnectors.entries
-                choice(card, getString(R.string.charging_connectors), connectors.map { it.localizedLabel(this) },
-                    connectors.indexOf(BydOutputSettings.chargingConnectors(this))) {
-                    BydOutputSettings.setChargingConnectors(this, connectors[it])
-                }
-                val lowCharge = BydOutputSettings.lowChargePresets
-                choice(card, getString(R.string.low_charge_warning), lowCharge.map {
-                        getString(if (it == BydOutputSettings.DEFAULT_LOW_CHARGE_PERCENT) R.string.percent_default else R.string.percent_value, it)
-                    },
-                    lowCharge.indexOf(BydOutputSettings.lowChargePercent(this)).coerceAtLeast(0), reconnects = false) {
-                    BydOutputSettings.setLowChargePercent(this, lowCharge[it])
-                }
-                toggle(card, getString(R.string.wheel_speed_for_tunnels),
-                    getString(R.string.wheel_speed_for_tunnels_description),
-                    BydOutputSettings.wheelSpeedToIphone(this)) {
-                    BydOutputSettings.setWheelSpeedToIphone(this, it)
-                    if (it) checkAdbAccess(mayAsk = true)
-                    if (CarPlayBackgroundSession.hasSession()) connect(AirPlayPersistence.loadWirelessEnabled(this))
-                }
-                toggle(card, getString(R.string.video_while_parked),
-                    getString(R.string.video_while_parked_description),
-                    BydOutputSettings.videoWhileParked(this)) {
-                    BydOutputSettings.setVideoWhileParked(this, it)
-                    if (it) checkAdbAccess(mayAsk = true)
-                    if (CarPlayBackgroundSession.hasSession()) connect(AirPlayPersistence.loadWirelessEnabled(this))
-                }
-                if (BydOutputSettings.clusterStreamPause(this) || BydOutputSettings.batteryToIphone(this) ||
-                    BydOutputSettings.wheelSpeedToIphone(this) || BydOutputSettings.videoWhileParked(this))
-                    checkAdbAccess(mayAsk = false)
-                card.addView(button(getString(R.string.apply_and_reconnect), false) {
-                    if (BydOutputSettings.batteryToIphone(this)) {
-                        checkAdbAccess(mayAsk = true, reconnectWhenReady = true)
-                    } else {
-                        connect(AirPlayPersistence.loadWirelessEnabled(this))
-                    }
-                }, matchButton(10, 56))
             }
+            // These read the car over the local adb shell (autoservice), not through the stock
+            // navigation adapter, so they are offered whenever the BYD section is shown.
+            toggle(card, getString(R.string.car_battery_for_the_iphone),
+                getString(R.string.car_battery_for_the_iphone_description),
+                BydOutputSettings.batteryToIphone(this)) {
+                BydOutputSettings.setBatteryToIphone(this, it)
+                if (it) {
+                    checkAdbAccess(mayAsk = true, reconnectWhenReady = CarPlayBackgroundSession.hasSession())
+                } else if (CarPlayBackgroundSession.hasSession()) {
+                    connect(AirPlayPersistence.loadWirelessEnabled(this))
+                }
+            }
+            val connectors = EvChargingConnectors.entries
+            choice(card, getString(R.string.charging_connectors), connectors.map { it.localizedLabel(this) },
+                connectors.indexOf(BydOutputSettings.chargingConnectors(this))) {
+                BydOutputSettings.setChargingConnectors(this, connectors[it])
+            }
+            val lowCharge = BydOutputSettings.lowChargePresets
+            choice(card, getString(R.string.low_charge_warning), lowCharge.map {
+                    getString(if (it == BydOutputSettings.DEFAULT_LOW_CHARGE_PERCENT) R.string.percent_default else R.string.percent_value, it)
+                },
+                lowCharge.indexOf(BydOutputSettings.lowChargePercent(this)).coerceAtLeast(0), reconnects = false) {
+                BydOutputSettings.setLowChargePercent(this, lowCharge[it])
+            }
+            toggle(card, getString(R.string.wheel_speed_for_tunnels),
+                getString(R.string.wheel_speed_for_tunnels_description),
+                BydOutputSettings.wheelSpeedToIphone(this)) {
+                BydOutputSettings.setWheelSpeedToIphone(this, it)
+                if (it) checkAdbAccess(mayAsk = true)
+                if (CarPlayBackgroundSession.hasSession()) connect(AirPlayPersistence.loadWirelessEnabled(this))
+            }
+            toggle(card, getString(R.string.video_while_parked),
+                getString(R.string.video_while_parked_description),
+                BydOutputSettings.videoWhileParked(this)) {
+                BydOutputSettings.setVideoWhileParked(this, it)
+                if (it) checkAdbAccess(mayAsk = true)
+                if (CarPlayBackgroundSession.hasSession()) connect(AirPlayPersistence.loadWirelessEnabled(this))
+            }
+            if (BydOutputSettings.clusterStreamPause(this) || BydOutputSettings.batteryToIphone(this) ||
+                BydOutputSettings.wheelSpeedToIphone(this) || BydOutputSettings.videoWhileParked(this))
+                checkAdbAccess(mayAsk = false)
+            card.addView(button(getString(R.string.apply_and_reconnect), false) {
+                if (BydOutputSettings.batteryToIphone(this)) {
+                    checkAdbAccess(mayAsk = true, reconnectWhenReady = true)
+                } else {
+                    connect(AirPlayPersistence.loadWirelessEnabled(this))
+                }
+            }, matchButton(10, 56))
         }
         section(content, getString(R.string.home_section_audio), R.drawable.ic_dp_display) { card ->
             if (resources.getBoolean(R.bool.config_advanced_audio_channel_mapping)) {
