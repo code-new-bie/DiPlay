@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="byd_vehicle_dc_charging">车辆支持 GB/T 直流充电</string>
+    <string name="byd_vehicle_dc_charging_desc">仅在实际车型支持直流充电时开启。配合电量上报向 Apple Maps 提供充电接口信息；关闭时只上报交流接口。</string>
+    <string name="byd_vehicle_location">使用车机定位</string>
+    <string name="byd_vehicle_location_desc">获得定位权限后，无线连接完成和倒车窗口显示期间继续发送车机 GPS 定位；手机需要请求定位数据。</string>
+    <string name="byd_vehicle_speed">车速和挡位辅助隧道导航</string>
+    <string name="byd_vehicle_speed_desc">手机请求时只读比亚迪车辆数据，需要已授权的网络 ADB 和定位权限。开启后同时启用车机定位上报。</string>
+    <string name="byd_vehicle_battery">向 Apple Maps 发送电量和纯电续航（实验）</string>
+    <string name="byd_vehicle_battery_desc">使用上游的电动车协议上报电量和纯电续航。DM-i 不包含燃油续航，需要已授权的网络 ADB，是否显示由手机支持情况决定。</string>
+    <string name="byd_vehicle_capacity_auto">自动读取</string>
+    <string name="byd_vehicle_capacity_value">%1$.2f kWh</string>
+    <string name="byd_vehicle_capacity_button">动力电池容量：%1$s</string>
+    <string name="byd_vehicle_capacity_title">动力电池容量（kWh，0 表示自动读取）</string>
+    <string name="byd_vehicle_capacity_invalid">请输入 0 至 200 的电池容量。</string>
+    <string name="byd_vehicle_capacity_desc">请填写实际车型的容量。自动读取无法获取剩余电量时，可填写容量，按电量百分比计算剩余电量。</string>
+    <string name="byd_vehicle_adb_check">检查并授权 ADB</string>
+    <string name="byd_vehicle_adb_checking">正在检查 ADB…</string>
+    <string name="byd_vehicle_adb_ready">ADB 已授权。\n车速／挡位：%1$s\n电量／纯电续航：%2$s</string>
+    <string name="byd_vehicle_data_available">可用</string>
+    <string name="byd_vehicle_data_unavailable">暂无有效数据（请检查车辆电源和电池容量）</string>
+    <string name="byd_vehicle_adb_not_approved">请在车机的调试授权弹窗中允许 DiPlay，然后重新检查。</string>
+    <string name="byd_vehicle_adb_unreachable">无法连接 127.0.0.1:5555，请打开车机网络 ADB。仅连接 USB ADB 不会开启此端口。</string>
+    <string name="byd_vehicle_adb_unsupported">当前调试服务的协议暂不支持，请使用 Android 10 网络 ADB 服务。</string>
+    <string name="byd_vehicle_adb_failed">ADB 检查失败：%1$s</string>
+    <string name="byd_vehicle_adb_desc">检查时可能出现调试授权弹窗，后台采样不会请求授权。车辆数据不可用时跳过上报，CarPlay 继续运行。</string>
+</resources>

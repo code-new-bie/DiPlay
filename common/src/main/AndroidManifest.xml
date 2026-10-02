@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application>
         <activity android:name="com.shilapi.xcertplay.DiPlayActivity"
@@ -18,7 +19,7 @@
             </intent-filter>
         </activity>
         <service android:name="com.shilapi.xcertplay.DiPlaySessionService"
-            android:exported="false" android:foregroundServiceType="connectedDevice|microphone" />
+            android:exported="false" android:foregroundServiceType="connectedDevice|microphone|location" />
 
         <activity
             android:name="com.shilapi.xcertplay.CarPlayHostActivity"
