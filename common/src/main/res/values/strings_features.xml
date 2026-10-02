@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_vehicle_name">Vehicle name</string>
+    <string name="feature_return_name">Return-to-car name</string>
+    <string name="feature_sync_return">Use vehicle name for the return button</string>
+    <string name="feature_reconnect_note">Applies on the next CarPlay connection.</string>
+    <string name="feature_mfi_local">Local offline</string>
+    <string name="feature_wifi_channel">Wi-Fi Direct channel</string>
+    <string name="feature_wifi_channel_option">%1$s · Channel %2$d · %3$d MHz</string>
+    <string name="feature_auto">Automatic</string>
+    <string name="feature_channel_note">Requested channel for the next connection. Availability depends on the radio and region; an unsupported request falls back to automatic selection.</string>
+    <string name="feature_test_sound">Test sound</string>
+    <string name="feature_tone_failed">Cannot preview audio channel %1$d on this device.</string>
+</resources>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_vehicle_name">车载名称</string>
+    <string name="feature_return_name">返回车机名称</string>
+    <string name="feature_sync_return">返回名称跟随车载名称</string>
+    <string name="feature_reconnect_note">下次连接 CarPlay 时生效。</string>
+    <string name="feature_mfi_local">本地离线</string>
+    <string name="feature_wifi_channel">Wi-Fi Direct 信道</string>
+    <string name="feature_wifi_channel_option">%1$s · 信道 %2$d · %3$d MHz</string>
+    <string name="feature_auto">自动</string>
+    <string name="feature_channel_note">下次连接时优先使用所选信道。可用信道取决于车机和地区；系统拒绝时将尝试自动选择。</string>
+    <string name="feature_test_sound">试听</string>
+    <string name="feature_tone_failed">此设备无法试听音频通道 %1$d。</string>
+</resources>

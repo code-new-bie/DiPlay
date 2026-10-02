@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicReference
 class WifiP2pGroupManager(
     context: Context,
     private val diagnostic: (String) -> Unit = {},
+    private val preferredChannel: Int = 0,
 ) : WirelessHotspotManager {
     private val appContext = context.applicationContext
     private val p2pManager = appContext.getSystemService(WifiP2pManager::class.java)
@@ -134,6 +135,7 @@ class WifiP2pGroupManager(
             val creation = P2pStartupRecovery.create(
                 stationFrequency = stationFrequency,
                 preferred = preferred?.request,
+                requestedChannel = preferredChannel,
                 beforeRetry = {
                     ensureStartActive(attempt)
                     // Do not cancel discovery, toggle Wi-Fi, or remove a newly observed group.

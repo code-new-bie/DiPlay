@@ -12,8 +12,6 @@ import android.graphics.Color
 import android.graphics.SurfaceTexture
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
-import android.media.AudioDeviceInfo
-import android.media.AudioManager
 import android.media.MediaCodecList
 import android.media.MediaFormat
 import android.os.Build
@@ -43,6 +41,7 @@ import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.Switch
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
@@ -62,8 +61,10 @@ import com.shilapi.xcertplay.airplay.AirPlaySafeArea
 import com.shilapi.xcertplay.airplay.AirPlaySession
 import com.shilapi.xcertplay.airplay.AirPlaySessionListener
 import com.shilapi.xcertplay.airplay.CarPlayMediaEngine
+import com.shilapi.xcertplay.airplay.CarPlayVoiceKey
 import com.shilapi.xcertplay.airplay.SafeAreaRect
 import com.shilapi.xcertplay.host.R
+import com.shilapi.xcertplay.hud.BydCallUiSuppressor
 import com.shilapi.xcertplay.location.AndroidCarPlayLocationProvider
 import com.shilapi.xcertplay.media.AndroidMediaSink
 import com.shilapi.xcertplay.media.CarPlayTouchMapper
@@ -110,7 +111,7 @@ class CarPlayHostActivity : ComponentActivity() {
 
     // CH341 USB\VID_1A86&PID_5512&REV_0304 is the deployment-supplied bridge identity.
     private fun createRuntimeConfig(): CarPlayRuntimeConfig = CarPlayRuntimeConfig(
-        mfiTarget = MfiTarget.LOCAL,
+        mfiTarget = mfiTarget,
         ch341Devices = if (mfiTarget == MfiTarget.USB_CH341) {
             listOf(UsbDeviceId(0x1a86, 0x5512))
         } else {
@@ -126,7 +127,7 @@ class CarPlayHostActivity : ComponentActivity() {
         remoteMfiServer = remoteMfiServer.trim().takeIf { it.isNotEmpty() },
         remoteMfiToken = remoteMfiToken.takeIf { it.isNotEmpty() },
         identification = Iap2IdentificationConfig(
-            name = "DiPlay",
+            name = vehicleName,
             modelIdentifier = normalizedModel(),
             manufacturer = normalizedManufacturer(),
             serialNumber = "DIPLAY-" + DiPlayBootstrap.deviceId(airPlayIdentity).replace(":", ""),
@@ -135,12 +136,13 @@ class CarPlayHostActivity : ComponentActivity() {
             carPlayUsbInterfaceNumber = 3,
             locationInformationEnabled = locationReportingEnabled,
         ),
-        label = "DiPlay",
+        label = vehicleName,
         hostName = "diplay-" + DiPlayBootstrap.deviceId(airPlayIdentity).replace(":", "").lowercase(),
         hostMac = DiPlayBootstrap.deviceId(airPlayIdentity).split(":").map { it.toInt(16).toByte() }.toByteArray(),
         wirelessBluetoothDeviceAddress = DiPlayPreferences.phoneAddress(this),
         transport = if (wirelessEnabled) CarPlayTransport.WIRELESS else CarPlayTransport.WIRED,
         wirelessHotspotMode = wirelessHotspotMode,
+        wifiDirectChannel = wifiDirectChannel,
         manualHotspotSsid = manualHotspotSsid,
         manualHotspotPassphrase = manualHotspotPassphrase,
         manualHotspotBand = manualHotspotBand,
@@ -273,7 +275,12 @@ class CarPlayHostActivity : ComponentActivity() {
     private var hevcSoftwareDecoderEnabled = false
     private var advancedAudioChannelMappingSupported = false
     private var advancedAudioChannelMapping = false
-    private var audioFocusEnabled = false
+    private var vehicleName = "DiPlay"
+    private var syncReturnName = true
+    private var wifiDirectChannel = 0
+    private val channelPreview = AudioChannelPreview { channel ->
+        Toast.makeText(this, getString(R.string.feature_tone_failed, channel), Toast.LENGTH_SHORT).show()
+    }
     private var muteLocalMediaPlayback = false
     private var mediaAudioChannel = 0
     private var navigationAudioChannel = 0
@@ -319,6 +326,8 @@ class CarPlayHostActivity : ComponentActivity() {
     private var darkMode = false
     private var appearanceMonitor: CarPlayAppearanceMonitor? = null
     private var activeAirPlaySession: AirPlaySession? = null
+    private var carPlayPageVisible = false
+    private val bydCallUiSuppressor by lazy { BydCallUiSuppressor(applicationContext) }
     private val activeScreenStreamTypes = mutableSetOf<Int>()
     private var handshakeResetInProgress = false
     private var startAfterHandshakeReset = false
@@ -452,7 +461,9 @@ class CarPlayHostActivity : ComponentActivity() {
         advancedAudioChannelMapping =
             advancedAudioChannelMappingSupported &&
                 AirPlayPersistence.loadAdvancedAudioChannelMapping(this)
-        audioFocusEnabled = AirPlayPersistence.loadAudioFocusEnabled(this)
+        vehicleName = AirPlayPersistence.loadVehicleName(this)
+        syncReturnName = AirPlayPersistence.loadSyncReturnName(this)
+        wifiDirectChannel = AirPlayPersistence.loadWifiDirectChannel(this)
         muteLocalMediaPlayback = AirPlayPersistence.loadMuteLocalMediaPlayback(this)
         mediaAudioChannel = AirPlayPersistence.loadMediaAudioChannel(this)
         navigationAudioChannel = AirPlayPersistence.loadNavigationAudioChannel(this)
@@ -573,6 +584,17 @@ class CarPlayHostActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        carPlayPageVisible = true
+        updateBydCallUi()
+    }
+
+    private fun updateBydCallUi() {
+        bydCallUiSuppressor.updateUsage(carPlayPageVisible,
+            controller?.hasActiveAirPlaySession() == true)
+    }
+
     override fun onResume() {
         super.onResume()
         appearanceMonitor?.updateUiMode(resources.configuration.uiMode)
@@ -586,12 +608,28 @@ class CarPlayHostActivity : ComponentActivity() {
         applyFullscreenMode()
     }
 
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        val currentController = controller
+        if (!CarPlayVoiceKey.handles(event.keyCode) ||
+            currentController?.hasActiveAirPlaySession() != true) {
+            return super.dispatchKeyEvent(event)
+        }
+        if (CarPlayVoiceKey.invokesSiri(event)) {
+            val queued = currentController.requestSiri()
+            appendLog("Siri: long voice key ${event.keyCode} queued=$queued")
+        }
+        return true
+    }
+
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) applyFullscreenMode()
     }
 
     override fun onStop() {
+        channelPreview.stop()
+        carPlayPageVisible = false
+        updateBydCallUi()
         // The controller, USB/iAP2 link, and VPN attachment intentionally outlive the UI.
         super.onStop()
     }
@@ -609,6 +647,8 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        bydCallUiSuppressor.close()
+        channelPreview.close()
         appearanceMonitor?.stop()
         mainHandler.removeCallbacks(applyDisplaySize)
         mainHandler.removeCallbacks(expireOldLogLines)
@@ -846,20 +886,6 @@ class CarPlayHostActivity : ComponentActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             ).apply { topMargin = dp(36) },
-        )
-        content.addView(
-            settingsSwitchRow(
-                label = getString(R.string.host_audio_focus_label),
-                checked = audioFocusEnabled,
-                description = getString(R.string.host_audio_focus_desc),
-            ) { checked ->
-                audioFocusEnabled = checked
-                appendLog("Audio focus ${if (checked) "enabled" else "disabled"}")
-            },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
         )
         content.addView(
             settingsSwitchRow(
@@ -1343,7 +1369,9 @@ class CarPlayHostActivity : ComponentActivity() {
         AirPlayPersistence.saveLocationReportingEnabled(this, locationReportingEnabled)
         AirPlayPersistence.saveAutoStartOnBoot(this, autoStartOnBoot)
         AirPlayPersistence.saveAdvancedAudioChannelMapping(this, advancedAudioChannelMapping)
-        AirPlayPersistence.saveAudioFocusEnabled(this, audioFocusEnabled)
+        AirPlayPersistence.saveVehicleName(this, vehicleName)
+        AirPlayPersistence.saveSyncReturnName(this, syncReturnName)
+        AirPlayPersistence.saveWifiDirectChannel(this, wifiDirectChannel)
         AirPlayPersistence.saveMuteLocalMediaPlayback(this, muteLocalMediaPlayback)
         AirPlayPersistence.saveMediaAudioChannel(this, mediaAudioChannel)
         AirPlayPersistence.saveNavigationAudioChannel(this, navigationAudioChannel)
@@ -1433,6 +1461,7 @@ class CarPlayHostActivity : ComponentActivity() {
         val targetChoice = settingsChoiceRow(
             label = getString(R.string.host_mfi_target_label),
             options = listOf(
+                MfiTarget.LOCAL to getString(R.string.feature_mfi_local),
                 MfiTarget.USB_CH341 to getString(R.string.host_mfi_usb),
                 MfiTarget.I2C to getString(R.string.host_mfi_i2c),
                 MfiTarget.REMOTE to getString(R.string.host_mfi_remote),
@@ -1546,37 +1575,18 @@ class CarPlayHostActivity : ComponentActivity() {
         return section
     }
 
-    /** Probes this unit's audio outputs (ids 1-40) for the navigation channel picker. */
-    private fun probedAudioOutputs(): List<AudioDeviceInfo> =
-        (getSystemService(Context.AUDIO_SERVICE) as? AudioManager)
-            ?.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
-            ?.filter { it.id in 1..40 }
-            ?.sortedBy { it.id }
-            .orEmpty()
-
-    private fun audioOutputLabel(device: AudioDeviceInfo): String {
-        val channels = device.channelCounts.maxOrNull() ?: 0
-        val name = device.productName?.toString().orEmpty()
-            .ifBlank { getString(R.string.host_nav_channel_output) }
-        return getString(R.string.host_nav_channel_option, device.id, name, channels)
-    }
-
     private fun buildNavigationChannelSection(): View {
         val section = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
         }
-        val options = buildList {
-            add(0 to getString(R.string.host_nav_channel_auto))
-            probedAudioOutputs().forEach { device ->
-                add(device.id to audioOutputLabel(device))
-            }
-        }
+        val options = (0..40).map { it to it.toString() }
         section.addView(
             settingsChoiceRow(
                 label = getString(R.string.host_nav_channel_label),
                 options = options,
                 selected = navigationAudioChannel,
             ) { channel ->
+                channelPreview.play(channel, navigation = true)
                 if (navigationAudioChannel == channel) return@settingsChoiceRow
                 navigationAudioChannel = channel
                 navChannelInput?.setText(channel.toString())
@@ -1651,6 +1661,11 @@ class CarPlayHostActivity : ComponentActivity() {
         val section = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
         }
+        section.addView(settingsInputRow(getString(R.string.feature_vehicle_name), vehicleName) { value ->
+            vehicleName = value.trim().replace("\u0000", "").take(64).ifBlank { "DiPlay" }
+        })
+        section.addView(settingsSwitchRow(getString(R.string.feature_sync_return), syncReturnName,
+            getString(R.string.feature_reconnect_note)) { syncReturnName = it })
         section.addView(
             settingsInputRow(getString(R.string.host_manufacturer), manufacturer) { value ->
                 manufacturer = value
@@ -2300,6 +2315,12 @@ class CarPlayHostActivity : ComponentActivity() {
             ),
         )
 
+        section.addView(settingsChoiceRow(getString(R.string.feature_wifi_channel),
+            com.shilapi.xcertplay.network.WifiChannelPreference.channels.map {
+                it to WifiChannelDisplay.label(this, it)
+            }, wifiDirectChannel) { wifiDirectChannel = it })
+        section.addView(menuText(getString(R.string.feature_channel_note), 14f, MENU_SECONDARY))
+
         val manualFields = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
         }
@@ -2667,12 +2688,6 @@ class CarPlayHostActivity : ComponentActivity() {
                     else getString(R.string.host_disabled),
                 )
                 .append('\n')
-            append(getString(R.string.host_prev_audio_focus))
-                .append(
-                    if (audioFocusEnabled) getString(R.string.host_enabled)
-                    else getString(R.string.host_disabled),
-                )
-                .append('\n')
             append(getString(R.string.host_prev_nav_channel))
                 .append(
                     if (navigationAudioChannel == 0) getString(R.string.host_nav_channel_auto_val)
@@ -2783,7 +2798,7 @@ class CarPlayHostActivity : ComponentActivity() {
         appendLog(support.details)
         appendLog(effectiveSummary)
         return AirPlayConfig(
-            deviceName = "DiPlay",
+            deviceName = vehicleName,
             deviceId = DiPlayBootstrap.deviceId(airPlayIdentity),
             btMac = DiPlayBluetooth.localAddress(this) ?: DiPlayBootstrap.deviceId(airPlayIdentity),
             sourceVersion = "950.7.1",
@@ -2793,7 +2808,7 @@ class CarPlayHostActivity : ComponentActivity() {
             microphone = microphoneAvailable,
             manufacturer = normalizedManufacturer(),
             model = normalizedModel(),
-            oemLabel = oemLabel,
+            oemLabel = if (syncReturnName) vehicleName else oemLabel,
             icons = listOf(loadAirPlayIcon()),
         )
     }
@@ -2965,7 +2980,6 @@ class CarPlayHostActivity : ComponentActivity() {
             videoHeight = videoHeight,
             preferSoftwareHevcDecoder = hevcSoftwareDecoderEnabled,
             advancedAudioChannelMapping = advancedAudioChannelMapping,
-            audioFocusEnabled = audioFocusEnabled,
             muteLocalMediaPlayback = AirPlayPersistence.loadMuteLocalMediaPlayback(this),
             mediaChannel = mediaAudioChannel,
             navigationChannel = navigationAudioChannel,
@@ -2995,6 +3009,7 @@ class CarPlayHostActivity : ComponentActivity() {
                         return@runOnUiThread
                     }
                     activeAirPlaySession = session
+                    updateBydCallUi()
                     CarPlayBackgroundSession.active = true
                     reconnectAttempts = 0
                     syncAirPlayDarkMode()
@@ -3006,6 +3021,7 @@ class CarPlayHostActivity : ComponentActivity() {
             override fun onSessionEnded(session: AirPlaySession) {
                 runOnUiThread {
                     if (activeAirPlaySession === session) activeAirPlaySession = null
+                    updateBydCallUi()
                     CarPlayBackgroundSession.active = false
                     if (menuOpen || controllerGeneration != restartGeneration) {
                         return@runOnUiThread
@@ -3073,6 +3089,7 @@ class CarPlayHostActivity : ComponentActivity() {
         }
         displayDiagnosticAttempt = DisplayDiagnosticSnapshot.currentAttempt(this)
         controller = snapshot.controller
+        updateBydCallUi()
         sink = snapshot.sink
         CarPlayBackgroundSession.store(snapshot.controller, snapshot.sink, snapshot.width, snapshot.height, this) { completion ->
             runOnUiThread {
@@ -3317,6 +3334,7 @@ class CarPlayHostActivity : ComponentActivity() {
         val oldSink = sink
         CarPlayBackgroundSession.clear(oldController, keepOwner = true)
         controller = null
+        updateBydCallUi()
         sink = null
         teardownExecutor.execute {
             oldController?.close()
@@ -3390,6 +3408,7 @@ class CarPlayHostActivity : ComponentActivity() {
         val oldSink = sink
         CarPlayBackgroundSession.clear(oldController)
         controller = null
+        updateBydCallUi()
         sink = null
         Log.i(TAG, "shutdown reason=$reason terminateProcess=$terminateProcess")
         teardownExecutor.execute {

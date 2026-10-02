@@ -65,8 +65,6 @@
     <string name="host_auto_start_desc">Start CarPlay automatically after device boot</string>
 
     <!-- Audio section -->
-    <string name="host_audio_focus_label">Audio focus</string>
-    <string name="host_audio_focus_desc">Navigation prompts lower media volume while they play</string>
     <string name="host_mute_local_media_label">Mute DiPlay media playback</string>
     <string name="host_mute_local_media_desc">Keep CarPlay navigation, calls and Siri audible. Select Bluetooth music output on iPhone separately. Applies when settings close.</string>
     <string name="host_adv_audio_label">Advanced audio channel mapping</string>
@@ -189,7 +187,6 @@
     <string name="host_prev_fullscreen">"Fullscreen: "</string>
     <string name="host_prev_transport">"Video transport: "</string>
     <string name="host_prev_loc">"Location reporting: "</string>
-    <string name="host_prev_audio_focus">"Audio focus: "</string>
     <string name="host_prev_acm">"Audio channel mapping: "</string>
     <string name="host_acm_aaos">AAOS buses</string>
     <string name="host_acm_mobile">Mobile compatible</string>
@@ -218,7 +215,7 @@
     <string name="host_nav_channel_label">Navigation audio channel</string>
     <string name="host_nav_channel_auto">Auto (system routing)</string>
     <string name="host_nav_channel_manual">Manual channel (0 = auto, max 40)</string>
-    <string name="host_nav_channel_hint">The list is probed from this unit\'s audio outputs (1-40). Changes apply when settings close.</string>
+    <string name="host_nav_channel_hint">0 uses automatic routing. Select 1–40 to preview a head-unit audio channel. Changes apply on reconnect.</string>
     <string name="host_nav_channel_output">audio output</string>
     <string name="host_nav_channel_option">#%1$d · %2$s · %3$d ch</string>
     <string name="host_prev_nav_channel">Navigation channel: </string>

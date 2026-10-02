@@ -154,6 +154,9 @@ class CarPlayController(
     private enum class Phase { IDLE, MFI, WIRELESS, IPHONE, REENUMERATION, DATAPATHS, CONTROL }
 
     private val appContext = context.applicationContext
+    /** Held only while a session runs: keeps the radio awake against power-save stalls. */
+    private val wirelessPerformanceLock =
+        com.shilapi.xcertplay.network.WirelessPerformanceLock(appContext, ::debugLog)
     private val usbManager = context.getSystemService(UsbManager::class.java)
     private val bluetoothAdapter =
         appContext.getSystemService(BluetoothManager::class.java)?.adapter
@@ -226,6 +229,7 @@ class CarPlayController(
         override fun onSessionActive(session: AirPlaySession) {
             if (activeSession !== session) BydNavigationOutputs.start(appContext)
             activeSession = session
+            wirelessPerformanceLock.acquire()
             debugLog(
                 "AirPlay session active controller=${session.controllerId ?: "unknown"} " +
                     "peer=${session.host}",
@@ -236,6 +240,7 @@ class CarPlayController(
         override fun onSessionEnded(session: AirPlaySession) {
             if (activeSession === session) {
                 activeSession = null
+                wirelessPerformanceLock.release()
                 BydNavigationOutputs.endNow()
             }
             debugLog("AirPlay session ended peer=${session.host}")
@@ -307,6 +312,8 @@ class CarPlayController(
 
     fun isClosed(): Boolean = closed
 
+    fun hasActiveAirPlaySession(): Boolean = !closed && activeSession != null
+
     fun hasActiveAirPlayAttachment(): Boolean = synchronized(lifecycleLock) {
         !closed && vpnService?.isAttached() == true
     }
@@ -341,6 +348,25 @@ class CarPlayController(
         }
     }
 
+    /** Queues Siri's voice-button command for the active iPhone session. */
+    fun requestSiri(): Boolean {
+        if (closed) return false
+        val session = activeSession ?: return false
+        return try {
+            touchExecutor.execute {
+                if (closed || activeSession !== session) return@execute
+                try {
+                    session.invokeSiri()
+                } catch (error: Exception) {
+                    debugLog("Siri request failed: ${error.javaClass.simpleName}")
+                }
+            }
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     fun sendTouch(contacts: List<AirPlayContact>): Boolean {
         if (closed) return false
         val session = activeSession ?: return false
@@ -358,6 +384,7 @@ class CarPlayController(
             closed = true
         }
         BydNavigationOutputs.endNow()
+        wirelessPerformanceLock.release()
         closeReceivers()
         availabilityPollGeneration.incrementAndGet()
         wirelessGeneration.incrementAndGet()
@@ -1547,7 +1574,7 @@ class CarPlayController(
             throw IOException("The car hotspot is off. Turn it on in the car settings and connect again.")
         }
         val manager: WirelessHotspotManager = when (hotspotMode) {
-            WirelessHotspotMode.WIFI_P2P -> WifiP2pGroupManager(appContext, ::debugLog)
+            WirelessHotspotMode.WIFI_P2P -> WifiP2pGroupManager(appContext, ::debugLog, config.wifiDirectChannel)
             WirelessHotspotMode.LOCAL_ONLY_HOTSPOT -> LocalOnlyHotspotManager(appContext)
             WirelessHotspotMode.MANUAL -> ManualHotspotManager(
                 context = appContext,

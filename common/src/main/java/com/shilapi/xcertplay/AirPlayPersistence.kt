@@ -38,7 +38,6 @@ object AirPlayPersistence {
     private const val KEY_HEVC_ENABLED = "hevc_enabled"
     private const val KEY_HEVC_SOFTWARE_DECODER = "hevc_software_decoder"
     private const val KEY_ADVANCED_AUDIO_CHANNEL_MAPPING = "advanced_audio_channel_mapping"
-    private const val KEY_AUDIO_FOCUS_ENABLED = "audio_focus_enabled"
     private const val KEY_MUTE_LOCAL_MEDIA_PLAYBACK = "mute_local_media_playback"
     private const val KEY_MEDIA_AUDIO_CHANNEL = "media_audio_channel"
     private const val KEY_NAVIGATION_AUDIO_CHANNEL = "navigation_audio_channel"
@@ -130,20 +129,6 @@ object AirPlayPersistence {
             .apply()
     }
 
-    /**
-     * Disabled by default: several head units mute streams that interact with their focus
-     * stack, so focus participation stays opt-in.
-     */
-    fun loadAudioFocusEnabled(context: Context): Boolean =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_AUDIO_FOCUS_ENABLED, false)
-
-    fun saveAudioFocusEnabled(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putBoolean(KEY_AUDIO_FOCUS_ENABLED, enabled)
-            .apply()
-    }
-
     fun loadMuteLocalMediaPlayback(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getBoolean(KEY_MUTE_LOCAL_MEDIA_PLAYBACK, false)
@@ -154,7 +139,7 @@ object AirPlayPersistence {
             .apply()
     }
 
-    /** 0 selects system routing; otherwise the AudioDeviceInfo id of the media output. */
+    /** 0 selects system routing; otherwise a head-unit legacy stream number. */
     fun loadMediaAudioChannel(context: Context): Int =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getInt(KEY_MEDIA_AUDIO_CHANNEL, 0)
@@ -186,6 +171,32 @@ object AirPlayPersistence {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putBoolean(KEY_WIRELESS_ENABLED, enabled)
             .apply()
+    }
+
+    fun loadVehicleName(context: Context): String =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString("vehicle_name", "DiPlay").orEmpty().ifBlank { "DiPlay" }
+
+    fun saveVehicleName(context: Context, name: String) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putString("vehicle_name", name.trim().replace("\u0000", "").take(64).ifBlank { "DiPlay" }).apply()
+    }
+
+    fun loadSyncReturnName(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("sync_return_name", true)
+
+    fun saveSyncReturnName(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putBoolean("sync_return_name", enabled).apply()
+    }
+
+    fun loadWifiDirectChannel(context: Context): Int =
+        com.shilapi.xcertplay.network.WifiChannelPreference.sanitize(
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt("wifi_direct_channel", 0))
+
+    fun saveWifiDirectChannel(context: Context, channel: Int) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putInt("wifi_direct_channel", com.shilapi.xcertplay.network.WifiChannelPreference.sanitize(channel)).apply()
     }
 
     fun loadMfiTarget(context: Context): MfiTarget {

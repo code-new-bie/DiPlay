@@ -180,8 +180,6 @@
     <string name="home_choice_summary">%1$s · %2$s</string>
 <!-- Audio -->
     <string name="home_section_audio">Audio</string>
-    <string name="home_toggle_audio_focus">Audio focus</string>
-    <string name="home_toggle_audio_focus_desc">CarPlay media claims audio focus. If sound disappears while enabled (some head units handle focus badly), turn it off. Changes apply on reconnect.</string>
     <string name="home_toggle_mute_local_media">Mute DiPlay media playback</string>
     <string name="home_toggle_mute_local_media_desc">Keep CarPlay navigation, calls and Siri audible in DiPlay. Select Bluetooth output for music on your iPhone separately. Reconnects CarPlay when changed.</string>
     <string name="home_media_channel_label">Media audio channel</string>
@@ -190,7 +188,7 @@
     <string name="home_nav_channel_value">#%1$d</string>
     <string name="home_nav_channel_option">#%1$d · %2$s · %3$d ch</string>
     <string name="home_nav_channel_output">audio output</string>
-    <string name="home_nav_channel_note">Channels 1-40 are defined by the head unit\'s audio policy (3 = media); vendors define the rest. Changes apply on reconnect.</string>
+    <string name="home_nav_channel_note">0 uses automatic routing. Select a channel to hear a test sound, or tap Test sound to replay it. Availability depends on the head unit. Changes apply on reconnect.</string>
     <string name="home_ch_stream_system">System</string>
     <string name="home_ch_stream_ring">Ringtone</string>
     <string name="home_ch_stream_music">Media</string>

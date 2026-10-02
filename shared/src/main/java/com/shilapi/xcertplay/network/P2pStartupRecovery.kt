@@ -20,13 +20,16 @@ internal object P2pStartupRecovery {
     }
 
     /** A band-only request still needs channel selection, which some BYD drivers cannot do. */
-    fun plan(stationFrequency: Int?, preferred: P2pCreationRequest? = null): List<P2pCreationRequest> = buildList {
+    fun plan(stationFrequency: Int?, preferred: P2pCreationRequest? = null, requestedChannel: Int = 0): List<P2pCreationRequest> = buildList {
         val aligned24 = stationFrequency != null && stationFrequency in 2412..2462 &&
             (stationFrequency - 2412) % 5 == 0
         val aligned5 = stationFrequency in listOf(5180, 5200, 5220, 5240, 5745, 5765, 5785, 5805, 5825)
         val frequencies = mutableSetOf<Int>()
         fun channel(mode: P2pCreationMode, frequency: Int) {
             if (frequencies.add(frequency)) add(P2pCreationRequest(mode, frequency))
+        }
+        WifiChannelPreference.frequency(requestedChannel)?.let {
+            channel(if (it < 5000) P2pCreationMode.FIXED_2_GHZ else P2pCreationMode.FIXED_5_GHZ, it)
         }
         if (preferred?.mode == P2pCreationMode.SYSTEM_DEFAULT && preferred.frequencyMHz == null) add(preferred)
         else preferred?.frequencyMHz?.let(::rememberedFrequency)?.let { channel(it.mode, it.frequencyMHz!!) }
@@ -46,9 +49,10 @@ internal object P2pStartupRecovery {
         stationFrequency: Int?,
         beforeRetry: () -> Unit,
         preferred: P2pCreationRequest? = null,
+        requestedChannel: Int = 0,
         request: (P2pCreationRequest) -> Unit,
     ): P2pCreationRequest {
-        val modes = plan(stationFrequency, preferred)
+        val modes = plan(stationFrequency, preferred, requestedChannel)
         var retriedBusy = false
         for ((index, mode) in modes.withIndex()) {
             while (true) {

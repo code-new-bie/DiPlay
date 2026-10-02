@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="byd_settings">BYD settings</string>
+    <string name="byd_hide_stock_call_ui">Hide stock call popups (experimental)</string>
+    <string name="byd_hide_stock_call_ui_description">While connected CarPlay is on screen, use the stock HiCar interface to dismiss call popups. No ADB required. A popup may briefly appear before closing. Turn off to restore the stock call interface.</string>
+</resources>

@@ -2,16 +2,12 @@ package com.shilapi.xcertplay.media
 
 import android.content.Context
 import android.media.AudioAttributes
-import android.media.AudioFocusRequest
 import android.media.AudioFormat as AndroidAudioFormat
-import android.media.AudioManager
 import android.media.AudioTrack
 import android.media.MediaCodec
 import android.media.MediaCodecList
 import android.media.MediaFormat
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.view.Surface
 import com.shilapi.xcertplay.airplay.AudioCodecKind
@@ -44,7 +40,6 @@ class AndroidMediaSink(
     private val videoHeight: Int = 720,
     private val preferSoftwareHevcDecoder: Boolean = false,
     private val advancedAudioChannelMapping: Boolean = false,
-    private val audioFocusEnabled: Boolean = false,
     private val muteLocalMediaPlayback: Boolean = false,
     private val mediaChannel: Int = 0,
     private val navigationChannel: Int = 0,
@@ -202,10 +197,8 @@ class AndroidMediaSink(
         return AudioRenderer(
             format,
             advancedAudioChannelMapping,
-            audioFocusEnabled,
             mediaChannel,
             navigationChannel,
-            appContext,
             mediaBufferMillis,
             onAudioDiagnostic,
         ).also { audioRenderers[id] = it }
@@ -530,19 +523,13 @@ private fun MediaFormat.intOrNull(key: String): Int? =
 private class AudioRenderer(
     val format: AudioFormat,
     private val advancedAudioChannelMapping: Boolean,
-    private val audioFocusEnabled: Boolean,
     private val mediaChannel: Int,
     private val navigationChannel: Int,
-    context: Context?,
     private val mediaBufferMillis: Int,
     private val report: (String) -> Unit,
 ) : Closeable {
     private data class AudioPacket(val rtp: ByteArray, val sample: Int)
 
-    private val audioManager = context?.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
-    private val focusHandler = Handler(Looper.getMainLooper())
-    private var focusRequest: AudioFocusRequest? = null
-    private var trackAttributes: AudioAttributes? = null
     private var mappedChannel: AudioChannel? = null
     private val queue = LinkedBlockingQueue<AudioPacket>(MAX_QUEUED_PACKETS)
     @Volatile private var running = true
@@ -575,16 +562,6 @@ private class AudioRenderer(
     private var lastPcmWriteNs = 0L
     private var rebufferCount = 0
     private val thread = Thread(::run, "carplay-audio").apply { isDaemon = true }
-
-    private val focusListener = AudioManager.OnAudioFocusChangeListener { change ->
-        when (change) {
-            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> setTrackVolume(DUCKED_VOLUME)
-            AudioManager.AUDIOFOCUS_GAIN -> setTrackVolume(FULL_VOLUME)
-            // LOSS / LOSS_TRANSIENT deliberately keep playing. CarPlay is the active source
-            // while the session runs, and some head units never return focus once it is
-            // taken back by the system, so self-muting here would silence audio forever.
-        }
-    }
 
     fun start() {
         if (started) return
@@ -622,7 +599,6 @@ private class AudioRenderer(
                 AudioCodecKind.LPCM -> Unit
             }
             createTrack()
-            requestAudioFocus()
             while (running) {
                 queue.poll(AUDIO_POLL_MILLIS, TimeUnit.MILLISECONDS)?.let(::handle)
                 // Output becomes ready asynchronously, including after the last packet of a burst.
@@ -691,7 +667,6 @@ private class AudioRenderer(
         mappedChannel = selection.channel
         val streamOverride = channelOverride(selection.channel)
         val attributes = audioAttributesFor(selection, streamOverride)
-        trackAttributes = attributes
         val plan = MediaAudioBuffer.plan(selection.channel == AudioChannel.MEDIA,
             format.sampleRate, format.channels, minBuffer, mediaBufferMillis)
         val frameBytes = if (format.channels >= 2) 4 else 2
@@ -727,8 +702,7 @@ private class AudioRenderer(
                 "mode=${if (advancedAudioChannelMapping) AudioChannelMappingMode.AUTOMOTIVE_BUS else AudioChannelMappingMode.MOBILE_COMPATIBLE} " +
                 "channel=${selection.channel} usage=${usageFor(selection.channel)} " +
                 "contentType=${contentTypeFor(selection.contentType)} " +
-                "streamOverride=$streamOverride " +
-                "focus=${if (audioFocusEnabled) "on" else "off"}",
+                "streamOverride=$streamOverride",
         )
     }
 
@@ -777,46 +751,6 @@ private class AudioRenderer(
             .setUsage(usageFor(selection.channel))
             .setContentType(contentTypeFor(selection.contentType))
             .build()
-
-    /**
-     * Requests focus so other apps treat this renderer as the active source. Navigation
-     * guidance intentionally takes no focus: it overlays media without ducking it.
-     */
-    private fun requestAudioFocus() {
-        if (!audioFocusEnabled) return
-        val manager = audioManager ?: return
-        val channel = mappedChannel ?: return
-        val attributes = trackAttributes ?: return
-        if (channel == AudioChannel.NAVIGATION) {
-            Log.i(TAG, "audio focus skipped channel=NAVIGATION; overlays without ducking")
-            return
-        }
-        val focusGain = when (channel) {
-            AudioChannel.MEDIA -> AudioManager.AUDIOFOCUS_GAIN
-            AudioChannel.ASSISTANT -> AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
-            AudioChannel.PHONE -> AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
-            AudioChannel.NAVIGATION -> return
-        }
-        val request = AudioFocusRequest.Builder(focusGain)
-            .setAudioAttributes(attributes)
-            .setOnAudioFocusChangeListener(focusListener, focusHandler)
-            .build()
-        focusRequest = request
-        val granted = manager.requestAudioFocus(request)
-        Log.i(TAG, "audio focus requested channel=$channel gain=$focusGain granted=$granted")
-    }
-
-    private fun abandonAudioFocus() {
-        val request = focusRequest ?: return
-        focusRequest = null
-        audioManager?.abandonAudioFocusRequest(request)
-    }
-
-    private fun setTrackVolume(volume: Float) {
-        val active = track ?: return
-        val result = active.setStereoVolume(volume, volume)
-        Log.i(TAG, "audio focus volume type=${format.payloadType} volume=$volume result=$result")
-    }
 
     private fun aacAudioSpecificConfig(): ByteArray {
         val frequencyIndex = MediaCodecSupport.aacFrequencyIndex(format.sampleRate)
@@ -1087,7 +1021,6 @@ private class AudioRenderer(
 
     @Synchronized
     private fun release() {
-        abandonAudioFocus()
         val codec = codec
         this.codec = null
         if (codec != null) {
@@ -1138,8 +1071,6 @@ private class AudioRenderer(
         const val STATS_TAG = "DiPlay-AudioStats"
         const val STATS_WINDOW_NS = 5_000_000_000L
         const val DECODED_BUFFER_LOG_INTERVAL = 50
-        const val FULL_VOLUME = 1f
-        const val DUCKED_VOLUME = 0.2f
         const val MUTED_VOLUME = 0f
     }
 }

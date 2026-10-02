@@ -65,8 +65,6 @@
     <string name="host_auto_start_desc">设备开机后自动启动 CarPlay</string>
 
     <!-- 音频分区 -->
-    <string name="host_audio_focus_label">音频焦点</string>
-    <string name="host_audio_focus_desc">导航播报时自动压低媒体音量</string>
     <string name="host_mute_local_media_label">关闭 DiPlay 本地媒体播放</string>
     <string name="host_mute_local_media_desc">保留 CarPlay 导航、通话和 Siri 声音。音乐需在 iPhone 上另行选择蓝牙输出。关闭设置后生效。</string>
     <string name="host_adv_audio_label">高级音频声道映射</string>
@@ -189,7 +187,6 @@
     <string name="host_prev_fullscreen">"全屏："</string>
     <string name="host_prev_transport">"视频传输："</string>
     <string name="host_prev_loc">"位置上报："</string>
-    <string name="host_prev_audio_focus">"音频焦点："</string>
     <string name="host_prev_acm">"音频声道映射："</string>
     <string name="host_acm_aaos">AAOS 音频总线</string>
     <string name="host_acm_mobile">手机兼容模式</string>
@@ -218,7 +215,7 @@
     <string name="host_nav_channel_label">导航音频通道</string>
     <string name="host_nav_channel_auto">自动（系统路由）</string>
     <string name="host_nav_channel_manual">手动通道（0 = 自动，最大 40）</string>
-    <string name="host_nav_channel_hint">列表探测自本机音频输出（1-40）。更改在保存后下次连接生效。</string>
+    <string name="host_nav_channel_hint">0 为自动路由，选择 1–40 可试听车机音频通道。保存后重新连接生效。</string>
     <string name="host_nav_channel_output">音频输出</string>
     <string name="host_nav_channel_option">#%1$d · %2$s · %3$d 声道</string>
     <string name="host_prev_nav_channel">导航通道：</string>

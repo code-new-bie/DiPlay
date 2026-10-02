@@ -5,6 +5,9 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- createWifiLock(WIFI_MODE_FULL_HIGH_PERF) is refused without this; the lock keeps the
+         radio out of power save while a wireless CarPlay session runs. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission
         android:name="android.permission.NEARBY_WIFI_DEVICES"
         android:usesPermissionFlags="neverForLocation" />
@@ -27,6 +30,7 @@
         <package android:name="com.byd.clusterdebug" />
         <package android:name="com.ts.car.someip.service" />
         <package android:name="com.byd.amapservice" />
+        <package android:name="com.byd.bydlogtool" />
         <intent>
             <action android:name="com.android.settings.WIFI_TETHER_SETTINGS" />
         </intent>

@@ -29,6 +29,8 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.shilapi.xcertplay.host.R
+import com.shilapi.xcertplay.hud.BydCallUiSettings
+import com.shilapi.xcertplay.hud.BydSettingsAvailability
 import com.shilapi.xcertplay.orchestration.WirelessHotspotMode
 import java.io.File
 import java.text.SimpleDateFormat
@@ -38,6 +40,9 @@ import java.util.Locale
 /** DiAuto's visual language, with a connection flow for an independent CarPlay receiver. */
 class DiPlayActivity : ComponentActivity() {
     private val handler = Handler(Looper.getMainLooper())
+    private val channelPreview = AudioChannelPreview { channel ->
+        toast(getString(R.string.feature_tone_failed, channel))
+    }
     private var page = "home"
     private var setupError: String? = null
     private var status: TextView? = null
@@ -104,7 +109,12 @@ class DiPlayActivity : ComponentActivity() {
             }
         }
     }
-    override fun onPause() { handler.removeCallbacks(tick); super.onPause() }
+    override fun onPause() { channelPreview.stop(); handler.removeCallbacks(tick); super.onPause() }
+
+    override fun onDestroy() {
+        channelPreview.close()
+        super.onDestroy()
+    }
 
     private fun render() {
         status = null; connectButton = null; disconnectButton = null; lastRunning = null
@@ -204,6 +214,38 @@ class DiPlayActivity : ComponentActivity() {
             toggle(card, getString(R.string.home_toggle_open_after_start), getString(R.string.home_toggle_open_after_start_desc), AirPlayPersistence.loadAutoStartOnBoot(this)) { AirPlayPersistence.saveAutoStartOnBoot(this, it) }
             card.addView(button(getString(R.string.home_btn_choose_iphone_named, DiPlayPreferences.phoneName(this)), false) { choosePhone() }, matchButton(12, 60))
         }
+        section(content, getString(R.string.feature_vehicle_name)) { card ->
+            val name = AirPlayPersistence.loadVehicleName(this)
+            card.addView(button(getString(R.string.home_choice_summary, getString(R.string.feature_vehicle_name), name), false) {
+                textInput(getString(R.string.feature_vehicle_name), name, secret = false) {
+                    AirPlayPersistence.saveVehicleName(this, it); render()
+                }
+            }, matchButton(0, 60))
+            toggle(card, getString(R.string.feature_sync_return), getString(R.string.feature_reconnect_note),
+                AirPlayPersistence.loadSyncReturnName(this)) {
+                AirPlayPersistence.saveSyncReturnName(this, it); render()
+            }
+            if (!AirPlayPersistence.loadSyncReturnName(this)) {
+                card.addView(button(getString(R.string.home_choice_summary, getString(R.string.feature_return_name),
+                    AirPlayPersistence.loadOemLabel(this)), false) {
+                    textInput(getString(R.string.feature_return_name), AirPlayPersistence.loadOemLabel(this), secret = false) {
+                        AirPlayPersistence.saveOemLabel(this, it.trim()); render()
+                    }
+                }, matchButton(0, 60))
+            }
+        }
+        section(content, getString(R.string.host_mfi_target_label)) { card ->
+            val targets = com.shilapi.xcertplay.orchestration.MfiTarget.entries
+            val labels = listOf(getString(R.string.feature_mfi_local), getString(R.string.host_mfi_usb),
+                getString(R.string.host_mfi_i2c), getString(R.string.host_mfi_remote))
+            card.addView(button(getString(R.string.home_choice_summary, getString(R.string.host_mfi_target_label),
+                labels[targets.indexOf(AirPlayPersistence.loadMfiTarget(this))]), false) {
+                AlertDialog.Builder(this).setTitle(R.string.host_mfi_target_label)
+                    .setItems(labels.toTypedArray()) { _, index -> configureMfi(targets[index]) }
+                    .setNegativeButton(R.string.home_btn_cancel, null).show()
+            }, matchButton(0, 60))
+            card.addView(label(getString(R.string.feature_reconnect_note), 14, MUTED))
+        }
         section(content, getString(R.string.home_section_wireless_connection)) { card -> wirelessLinkControls(card) }
         section(content, getString(R.string.home_section_display_performance)) { card ->
             iconSizeControl(card)
@@ -221,12 +263,16 @@ class DiPlayActivity : ComponentActivity() {
                 AirPlayPersistence.saveHideTopBar(this, it); AirPlayPersistence.saveHideBottomBar(this, it)
             }
         }
-        if (com.shilapi.xcertplay.hud.BydOutputSettings.available(this)) section(content, getString(R.string.home_section_byd_navigation)) { card ->
-            toggle(card, getString(R.string.home_toggle_byd_navigation), getString(R.string.home_toggle_byd_navigation_desc),
-                com.shilapi.xcertplay.hud.BydOutputSettings.enabled(this)) { com.shilapi.xcertplay.hud.BydOutputSettings.setEnabled(this, it) }
+        if (BydSettingsAvailability.available(this)) section(content, getString(R.string.byd_settings)) { card ->
+            toggle(card, getString(R.string.byd_hide_stock_call_ui),
+                getString(R.string.byd_hide_stock_call_ui_description),
+                BydCallUiSettings.enabled(this)) { BydCallUiSettings.setEnabled(this, it) }
+            if (com.shilapi.xcertplay.hud.BydOutputSettings.available(this)) {
+                toggle(card, getString(R.string.home_toggle_byd_navigation), getString(R.string.home_toggle_byd_navigation_desc),
+                    com.shilapi.xcertplay.hud.BydOutputSettings.enabled(this)) { com.shilapi.xcertplay.hud.BydOutputSettings.setEnabled(this, it) }
+            }
         }
         section(content, getString(R.string.home_section_audio)) { card ->
-            toggle(card, getString(R.string.home_toggle_audio_focus), getString(R.string.home_toggle_audio_focus_desc), AirPlayPersistence.loadAudioFocusEnabled(this)) { AirPlayPersistence.saveAudioFocusEnabled(this, it) }
             toggle(card, getString(R.string.home_toggle_mute_local_media), getString(R.string.home_toggle_mute_local_media_desc), AirPlayPersistence.loadMuteLocalMediaPlayback(this)) {
                 AirPlayPersistence.saveMuteLocalMediaPlayback(this, it)
                 if (CarPlayBackgroundSession.hasSession()) connect(AirPlayPersistence.loadWirelessEnabled(this))
@@ -321,6 +367,28 @@ class DiPlayActivity : ComponentActivity() {
 
     // Wi-Fi Direct is the default link. The car's own hotspot is an alternative when Wi-Fi Direct is unstable.
     // The runtime config rejects manual mode without valid credentials, so it is only saved together with them.
+    private fun configureMfi(target: com.shilapi.xcertplay.orchestration.MfiTarget) {
+        val save = { AirPlayPersistence.saveMfiTarget(this, target); render() }
+        when (target) {
+            com.shilapi.xcertplay.orchestration.MfiTarget.I2C ->
+                textInput(getString(R.string.host_i2c_device), AirPlayPersistence.loadMfiI2cPath(this), false) {
+                    if (it.isNotBlank()) { AirPlayPersistence.saveMfiI2cPath(this, it); save() }
+                }
+            com.shilapi.xcertplay.orchestration.MfiTarget.REMOTE ->
+                textInput(getString(R.string.host_server_address), AirPlayPersistence.loadRemoteMfiServer(this), false) { server ->
+                    if (server.isNotBlank() && '\u0000' !in server) {
+                        textInput(getString(R.string.host_token_optional), AirPlayPersistence.loadRemoteMfiToken(this), true) { token ->
+                            if ('\u0000' !in token) {
+                                AirPlayPersistence.saveRemoteMfiServer(this, server)
+                                AirPlayPersistence.saveRemoteMfiToken(this, token); save()
+                            }
+                        }
+                    }
+                }
+            else -> save()
+        }
+    }
+
     private fun wirelessLinkControls(parent: LinearLayout) {
         val carHotspot = AirPlayPersistence.loadWirelessHotspotMode(this) == WirelessHotspotMode.MANUAL
         val options = arrayOf(getString(R.string.home_wireless_link_direct), getString(R.string.home_wireless_link_car_hotspot))
@@ -343,6 +411,13 @@ class DiPlayActivity : ComponentActivity() {
         }
         parent.addView(control, matchButton(0, 60)); parent.addView(space(12))
         if (!carHotspot) {
+            val channels = com.shilapi.xcertplay.network.WifiChannelPreference.channels
+            choice(parent, getString(R.string.feature_wifi_channel),
+                channels.map { WifiChannelDisplay.label(this, it) },
+                channels.indexOf(AirPlayPersistence.loadWifiDirectChannel(this)).coerceAtLeast(0)) {
+                AirPlayPersistence.saveWifiDirectChannel(this, channels[it])
+            }
+            parent.addView(label(getString(R.string.feature_channel_note), 14, MUTED))
             parent.addView(label(getString(R.string.home_wireless_direct_note), 14, MUTED).apply {
                 setPadding(0, 0, 0, dp(18))
             })
@@ -398,6 +473,7 @@ class DiPlayActivity : ComponentActivity() {
             showChannelDialog(
                 title = getString(R.string.home_nav_channel_label),
                 current = current,
+                navigation = true,
                 onApply = { value -> applyNavigationChannel(value, current, control, summary) },
             )
         }
@@ -412,32 +488,26 @@ class DiPlayActivity : ComponentActivity() {
      * are head-unit-defined channels routed by the vehicle's audio policy; probing cannot
      * see them, and a full list is the only way not to hide a channel the car really has.
      */
-    private fun showChannelDialog(title: String, current: Int, onApply: (Int) -> Unit) {
-        val streamNames = mapOf(
-            1 to getString(R.string.home_ch_stream_system),
-            2 to getString(R.string.home_ch_stream_ring),
-            3 to getString(R.string.home_ch_stream_music),
-            4 to getString(R.string.home_ch_stream_alarm),
-            5 to getString(R.string.home_ch_stream_notification),
-            6 to getString(R.string.home_ch_stream_sco),
-            8 to getString(R.string.home_ch_stream_dtmf),
-            9 to getString(R.string.home_ch_stream_tts),
-            10 to getString(R.string.home_ch_stream_accessibility),
-        )
-        val labels = (0..40).map { id ->
-            when {
-                id == 0 -> getString(R.string.home_nav_channel_auto)
-                streamNames.containsKey(id) -> "$id · ${streamNames[id]}"
-                else -> id.toString()
-            }
-        }
+    private fun showChannelDialog(title: String, current: Int, navigation: Boolean = false, onApply: (Int) -> Unit) {
+        val labels = (0..40).map(Int::toString)
         var selection = current.coerceIn(0, 40)
-        AlertDialog.Builder(this).setTitle(title)
-            .setSingleChoiceItems(labels.toTypedArray(), selection) { _, which -> selection = which }
+        val dialog = AlertDialog.Builder(this).setTitle(title)
+            .setSingleChoiceItems(labels.toTypedArray(), selection) { _, which ->
+                selection = which
+                channelPreview.play(which, navigation)
+            }
+            .setNeutralButton(R.string.feature_test_sound, null)
             .setPositiveButton(if (CarPlayBackgroundSession.hasSession()) getString(R.string.home_btn_apply_reconnect) else getString(R.string.home_btn_save)) { _, _ ->
                 onApply(selection)
             }
-            .setNegativeButton(getString(R.string.home_btn_cancel), null).show()
+            .setNegativeButton(getString(R.string.home_btn_cancel), null).create()
+        dialog.setOnDismissListener { channelPreview.stop() }
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                channelPreview.play(selection, navigation)
+            }
+        }
+        dialog.show()
     }
 
     private fun applyMediaChannel(value: Int, previous: Int, control: Button, summary: (Int) -> String) {
