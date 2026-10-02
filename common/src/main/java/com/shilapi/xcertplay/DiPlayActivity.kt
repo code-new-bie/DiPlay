@@ -31,6 +31,9 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.shilapi.xcertplay.host.R
 import com.shilapi.xcertplay.hud.BydCallUiSettings
 import com.shilapi.xcertplay.hud.BydSettingsAvailability
+import com.shilapi.xcertplay.hud.BydVehicleSettings
+import com.shilapi.xcertplay.hud.BydVehicleAccess
+import com.shilapi.xcertplay.adb.LocalAdb
 import com.shilapi.xcertplay.orchestration.WirelessHotspotMode
 import java.io.File
 import java.text.SimpleDateFormat
@@ -54,6 +57,7 @@ class DiPlayActivity : ComponentActivity() {
     private var notificationTransport = true
     private var exportInProgress = false
     private var exportButton: Button? = null
+    private var adbCheckInProgress = false
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
         connect(notificationTransport)
     }
@@ -271,6 +275,7 @@ class DiPlayActivity : ComponentActivity() {
                 toggle(card, getString(R.string.home_toggle_byd_navigation), getString(R.string.home_toggle_byd_navigation_desc),
                     com.shilapi.xcertplay.hud.BydOutputSettings.enabled(this)) { com.shilapi.xcertplay.hud.BydOutputSettings.setEnabled(this, it) }
             }
+            bydVehicleControls(card)
         }
         section(content, getString(R.string.home_section_audio)) { card ->
             toggle(card, getString(R.string.home_toggle_mute_local_media), getString(R.string.home_toggle_mute_local_media_desc), AirPlayPersistence.loadMuteLocalMediaPlayback(this)) {
@@ -307,6 +312,69 @@ class DiPlayActivity : ComponentActivity() {
         section(content, getString(R.string.home_section_open_source)) { card ->
             card.addView(label(getString(R.string.home_open_source_body), 16, MUTED))
         }
+    }
+
+    private fun bydVehicleControls(card: LinearLayout) {
+        toggle(card, getString(R.string.byd_vehicle_location), getString(R.string.byd_vehicle_location_desc),
+            AirPlayPersistence.loadLocationReportingEnabled(this)) { enabled ->
+            AirPlayPersistence.saveLocationReportingEnabled(this, enabled)
+            if (!enabled) BydVehicleSettings.setSpeedEnabled(this, false)
+            render()
+        }
+        toggle(card, getString(R.string.byd_vehicle_speed), getString(R.string.byd_vehicle_speed_desc),
+            BydVehicleSettings.speedEnabled(this)) { enabled ->
+            BydVehicleSettings.setSpeedEnabled(this, enabled)
+            if (enabled) AirPlayPersistence.saveLocationReportingEnabled(this, true)
+            render()
+        }
+        toggle(card, getString(R.string.byd_vehicle_battery), getString(R.string.byd_vehicle_battery_desc),
+            BydVehicleSettings.batteryEnabled(this)) { BydVehicleSettings.setBatteryEnabled(this, it) }
+        toggle(card, getString(R.string.byd_vehicle_dc_charging), getString(R.string.byd_vehicle_dc_charging_desc),
+            BydVehicleSettings.dcChargingEnabled(this)) { BydVehicleSettings.setDcChargingEnabled(this, it) }
+        val capacity = BydVehicleSettings.capacityKwh(this)
+        val capacityLabel = if (capacity == 0.0) getString(R.string.byd_vehicle_capacity_auto) else getString(R.string.byd_vehicle_capacity_value, capacity)
+        card.addView(button(getString(R.string.byd_vehicle_capacity_button, capacityLabel), false) {
+            textInput(getString(R.string.byd_vehicle_capacity_title), if (capacity == 0.0) "0" else String.format(Locale.US, "%.2f", capacity), false) { value ->
+                val number = value.toDoubleOrNull()
+                if (number != null && number.isFinite() && number in 0.0..200.0) {
+                    BydVehicleSettings.setCapacityKwh(this, number)
+                    render()
+                } else toast(getString(R.string.byd_vehicle_capacity_invalid))
+            }
+        }, matchButton(10, 60))
+        card.addView(label(getString(R.string.byd_vehicle_capacity_desc), 14, MUTED).apply { setPadding(0, dp(10), 0, 0) })
+        val checkButton = button(getString(if (adbCheckInProgress) R.string.byd_vehicle_adb_checking else R.string.byd_vehicle_adb_check), false) {}
+        checkButton.isEnabled = !adbCheckInProgress
+        checkButton.setOnClickListener {
+            adbCheckInProgress = true
+            checkButton.isEnabled = false
+            checkButton.text = getString(R.string.byd_vehicle_adb_checking)
+            kotlin.concurrent.thread(name = "diplay-byd-check", isDaemon = true) {
+                val result = runCatching { BydVehicleAccess.check(applicationContext) }
+                runOnUiThread {
+                    adbCheckInProgress = false
+                    if (!isFinishing && !isDestroyed) {
+                        render()
+                        val message = result.fold({ checked ->
+                            when (checked.access) {
+                                LocalAdb.Access.READY -> getString(R.string.byd_vehicle_adb_ready,
+                                    getString(if (checked.speedAvailable) R.string.byd_vehicle_data_available else R.string.byd_vehicle_data_unavailable),
+                                    getString(if (checked.batteryAvailable) R.string.byd_vehicle_data_available else R.string.byd_vehicle_data_unavailable)) +
+                                    if (checked.details.isBlank()) "" else "\n\n${checked.details}"
+                                LocalAdb.Access.NOT_APPROVED -> getString(R.string.byd_vehicle_adb_not_approved)
+                                LocalAdb.Access.UNREACHABLE -> getString(R.string.byd_vehicle_adb_unreachable)
+                                LocalAdb.Access.UNSUPPORTED -> getString(R.string.byd_vehicle_adb_unsupported)
+                            }
+                        }, { getString(R.string.byd_vehicle_adb_failed, it.javaClass.simpleName) })
+                        AlertDialog.Builder(this).setTitle(R.string.byd_vehicle_adb_check).setMessage(message)
+                            .setPositiveButton(android.R.string.ok, null).show()
+                    }
+                }
+            }
+        }
+        card.addView(checkButton, matchButton(10, 60))
+        card.addView(label(getString(R.string.byd_vehicle_adb_desc) + "\n" + getString(R.string.feature_reconnect_note), 14, MUTED)
+            .apply { setPadding(0, dp(10), 0, 0) })
     }
 
     private fun iconSizeControl(parent: LinearLayout) {

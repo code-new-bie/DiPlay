@@ -50,6 +50,8 @@ import com.shilapi.xcertplay.transport.Ch341UsbHost
 import com.shilapi.xcertplay.transport.Ch341UsbSession
 import com.shilapi.xcertplay.transport.Iap2IdentificationConfig
 import com.shilapi.xcertplay.transport.Iap2LocationProvider
+import com.shilapi.xcertplay.transport.Iap2LocationRequest
+import com.shilapi.xcertplay.transport.VehicleStatusProvider
 import com.shilapi.xcertplay.transport.Iap2UsbMuxHost
 import com.shilapi.xcertplay.transport.Iap2UsbSession
 import com.shilapi.xcertplay.transport.Iap2WiredCarPlayEndpoint
@@ -143,6 +145,7 @@ class CarPlayController(
     private val savePairRecord: (LockdownPairRecord) -> Unit = {},
     private val clearPairRecord: () -> Unit = {},
     private val locationProvider: Iap2LocationProvider? = null,
+    private val vehicleStatusProvider: VehicleStatusProvider? = null,
 ) : Closeable {
     init {
         require(!config.locationReportingEnabled || locationProvider != null) {
@@ -154,6 +157,7 @@ class CarPlayController(
     private enum class Phase { IDLE, MFI, WIRELESS, IPHONE, REENUMERATION, DATAPATHS, CONTROL }
 
     private val appContext = context.applicationContext
+    private val wirelessLocationRequest = Iap2LocationRequest()
     /** Held only while a session runs: keeps the radio awake against power-save stalls. */
     private val wirelessPerformanceLock =
         com.shilapi.xcertplay.network.WirelessPerformanceLock(appContext, ::debugLog)
@@ -412,6 +416,7 @@ class CarPlayController(
                     wirelessIdentification = null
                     wirelessAirPlayEndpoint = null
                     closeBestEffort("location provider") { locationProvider?.close() }
+                    closeBestEffort("vehicle status provider") { vehicleStatusProvider?.close() }
                 } finally {
                     executor.shutdownNow()
                     try {
@@ -979,6 +984,8 @@ class CarPlayController(
                 endpoint = endpoint,
                 timeoutMillis = controlLoopTimeoutMillis(),
                 locationProvider = locationProvider,
+                vehicleStatusProvider = vehicleStatusProvider,
+                locationRequest = wirelessLocationRequest,
                 onIncoming = ::onRouteFrame,
                 onProgress = ::debugLog,
             )
@@ -1065,6 +1072,9 @@ class CarPlayController(
                         endpoint = endpoint,
                         timeoutMillis = Iap2WirelessControlClient.NO_TIMEOUT_MILLIS,
                         locationProvider = locationProvider,
+                        vehicleStatusProvider = vehicleStatusProvider,
+                        locationRequest = wirelessLocationRequest,
+                        continueLocationRequest = true,
                         onReady = {
                             onWirelessTunnelReady(generation)
                         },
@@ -1182,6 +1192,11 @@ class CarPlayController(
                             generation != wirelessGeneration.get() ||
                             wirelessActiveReported.get()
                         ) {
+                            return@Thread
+                        }
+                        if (wirelessConnectionProof.hasRenderedFrame(generation)) {
+                            debugLog("wireless handoff tunnel iAP2 unavailable after first video frame; preserving the active CarPlay session")
+                            onStatus(CarPlayStatus.WirelessActive)
                             return@Thread
                         }
                         closeWirelessStack()
@@ -1519,6 +1534,7 @@ class CarPlayController(
                 availableCurrentMilliAmps = config.availableCurrentMilliAmps,
                 timeoutMillis = controlLoopTimeoutMillis(),
                 locationProvider = locationProvider,
+                vehicleStatusProvider = vehicleStatusProvider,
                 onIncoming = ::onRouteFrame,
                 onProgress = { message -> debugLog("wired $message") },
             )
@@ -1696,6 +1712,7 @@ class CarPlayController(
     }
 
     private fun closeWirelessStack(service: CarPlayVpnService? = vpnService) {
+        wirelessLocationRequest.components = null
         wirelessConnectionProof.clear()
         media.setIapTunnelHandler(null)
         val activeTunnel = wirelessTunnelChannel
