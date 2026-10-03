@@ -13,4 +13,18 @@ internal object DiPlayBluetooth {
                 !it.startsWith("02:00:00:00:00:") && it != "00:00:00:00:00:00"
         }
     }
+
+    /**
+     * The head unit's own Bluetooth name, which is what the driver sees in the iPhone's Bluetooth
+     * list. Used as the CarPlay vehicle name until the user saves one.
+     */
+    fun localName(context: Context): String? {
+        val adapter = runCatching {
+            context.getSystemService(BluetoothManager::class.java)?.adapter?.name
+        }.getOrNull()
+        val setting = runCatching {
+            Settings.Secure.getString(context.contentResolver, "device_name")
+        }.getOrNull()
+        return listOfNotNull(adapter, setting).firstOrNull { it.isNotBlank() }
+    }
 }

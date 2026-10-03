@@ -7,10 +7,18 @@ internal object DiagnosticRedactor {
     private val identifier = Regex("(?i)\\b[0-9a-f]{24,}\\b|\\b[0-9a-f]{8}-[0-9a-f-]{27,}\\b")
     private val address = Regex("(?<![0-9])(?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?![0-9])")
     private val namedDevice = Regex("(?i)(phone|device|peer|host)?name[=:]")
+    // Only accessory identity records may contain names. Phone discovery and other name lines stay private.
+    private val vehicleIdentity = Regex(
+        "^(?:\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s+)?(?:" +
+            "CarPlay identity iap2Name=.+ airPlayName=.+ returnName=.+|" +
+            "(?:(?:iAP tunnel|wired) )?iap2 identification sent name=.+ model=.+ manufacturer=.+|" +
+            "airplay /info identity name=.+ model=.+ manufacturer=.+ returnName=.+)$",
+    )
     private val ipv6 = Regex("(?i)(?:[0-9a-f]{1,4}:)*[0-9a-f]{0,4}::[0-9a-f:]*(?:%[a-z0-9_.-]+)?|(?:[0-9a-f]{1,4}:){7}[0-9a-f]{1,4}")
     fun redact(line: String): String? {
         if (line.contains("TRACE ") || line.contains("PHONE ") || line.contains('\n') || line.contains('\r')) return null
-        if (secret.containsMatchIn(line) || namedDevice.containsMatchIn(line)) return null
+        if (secret.containsMatchIn(line)) return null
+        if (namedDevice.containsMatchIn(line) && !vehicleIdentity.matches(line)) return null
         return line.replace(mac, "[address]").replace(identifier, "[identifier]")
             .replace(address, "[ip]").replace(ipv6, "[ip]").take(700)
     }

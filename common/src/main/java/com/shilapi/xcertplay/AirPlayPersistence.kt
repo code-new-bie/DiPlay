@@ -16,6 +16,7 @@ import com.shilapi.xcertplay.orchestration.MfiTarget
 import com.shilapi.xcertplay.orchestration.WirelessHotspotMode
 import com.shilapi.xcertplay.transport.LockdownPairRecord
 import java.io.File
+import java.util.Locale
 
 /** SharedPreferences persistence for the accessory identity and paired controllers. */
 object AirPlayPersistence {
@@ -51,6 +52,8 @@ object AirPlayPersistence {
     private const val KEY_DEBUG_LOGS_ENABLED = "debug_logs_enabled"
     private const val KEY_MANUFACTURER = "manufacturer"
     private const val KEY_MODEL = "model"
+    private const val KEY_ACCESSORY_SERIAL_NUMBER = "accessory_serial_number"
+    private const val KEY_NETWORK_HOST_NAME = "network_host_name"
     private const val KEY_OEM_LABEL = "oem_label"
     private const val KEY_FPS = "display_fps"
     private const val KEY_MEDIA_BUFFER_MS = "media_buffer_ms"
@@ -75,6 +78,12 @@ object AirPlayPersistence {
     const val DEFAULT_MODEL = "DiPlay"
     const val DEFAULT_OEM_LABEL = "BYD"
     const val DEFAULT_MFI_I2C_PATH = "/dev/i2c-1"
+
+    /** Last resort when neither a saved name nor the head unit's own name is available. */
+    const val DEFAULT_VEHICLE_NAME = "DiPlay"
+
+    private const val MAX_IDENTITY_TEXT_LENGTH = 64
+    private val HOST_NAME_PATTERN = Regex("[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?")
 
     fun loadDisplayScaleTenths(context: Context): Int {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -173,13 +182,31 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadVehicleName(context: Context): String =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getString("vehicle_name", "DiPlay").orEmpty().ifBlank { "DiPlay" }
+    /**
+     * The CarPlay vehicle name sent to the iPhone. A fresh install has no saved value, so it
+     * follows the head unit's own name instead of jumping to the build default: the name the
+     * iPhone keeps in its car record is whatever this returns at pairing time.
+     */
+    fun loadVehicleName(
+        context: Context,
+        headUnitName: (Context) -> String? = DiPlayBluetooth::localName,
+    ): String {
+        val stored = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString("vehicle_name", null)
+        val saved = stored?.trim()?.filterNot(Char::isISOControl)?.take(MAX_IDENTITY_TEXT_LENGTH)
+        if (!saved.isNullOrBlank()) return saved
+        return headUnitName(context)
+            ?.trim()?.filterNot(Char::isISOControl)?.take(MAX_IDENTITY_TEXT_LENGTH)
+            ?.takeIf { it.isNotBlank() }
+            ?: DEFAULT_VEHICLE_NAME
+    }
 
     fun saveVehicleName(context: Context, name: String) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putString("vehicle_name", name.trim().replace("\u0000", "").take(64).ifBlank { "DiPlay" }).apply()
+            .putString(
+                "vehicle_name",
+                name.trim().replace("\u0000", "").take(MAX_IDENTITY_TEXT_LENGTH).ifBlank { DEFAULT_VEHICLE_NAME },
+            ).apply()
     }
 
     fun loadSyncReturnName(context: Context): Boolean =
@@ -202,7 +229,14 @@ object AirPlayPersistence {
     fun loadMfiTarget(context: Context): MfiTarget {
         val stored = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getString(KEY_MFI_TARGET, null)
-        return MfiTarget.entries.firstOrNull { it.name == stored } ?: MfiTarget.LOCAL
+        val selected = MfiTarget.entries.firstOrNull { it.name == stored }
+        if (selected != null && selected != MfiTarget.LOCAL) return selected
+        val available = MfiTargetAvailability.resolve(selected, MfiTargetAvailability.hasLocalAssets(context))
+        // Persist what this call resolved, not only a rejected LOCAL selection: a first-run default
+        // must not stay unsaved, or the target shown by a settings page that reads the stored value
+        // would disagree with the target this device actually connects with.
+        if (selected != available) saveMfiTarget(context, available)
+        return available
     }
 
     fun saveMfiTarget(context: Context, target: MfiTarget) {
@@ -359,27 +393,51 @@ object AirPlayPersistence {
     }
 
     fun loadManufacturer(context: Context): String =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getString(KEY_MANUFACTURER, null)
-            ?.takeIf { it.isNotBlank() }
-            ?: DEFAULT_MANUFACTURER
+        loadIdentityText(context, KEY_MANUFACTURER).ifBlank { DEFAULT_MANUFACTURER }
 
     fun saveManufacturer(context: Context, manufacturer: String) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putString(KEY_MANUFACTURER, manufacturer)
-            .apply()
+        saveIdentityText(context, KEY_MANUFACTURER, manufacturer)
     }
 
     fun loadModel(context: Context): String =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getString(KEY_MODEL, null)
-            ?.takeIf { it.isNotBlank() }
-            ?: DEFAULT_MODEL
+        loadIdentityText(context, KEY_MODEL).ifBlank { DEFAULT_MODEL }
 
     fun saveModel(context: Context, model: String) {
+        saveIdentityText(context, KEY_MODEL, model)
+    }
+
+    /** An empty override keeps the serial number derived from the existing accessory identity. */
+    fun loadAccessorySerialNumber(context: Context): String = loadIdentityText(context, KEY_ACCESSORY_SERIAL_NUMBER)
+
+    fun saveAccessorySerialNumber(context: Context, serialNumber: String) {
+        saveIdentityText(context, KEY_ACCESSORY_SERIAL_NUMBER, serialNumber)
+    }
+
+    /** An empty override keeps Bonjour's automatic host name. */
+    fun loadNetworkHostName(context: Context): String =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_NETWORK_HOST_NAME, null)
+            .orEmpty().trim().lowercase(Locale.ROOT).takeIf(::isValidNetworkHostName).orEmpty()
+
+    fun saveNetworkHostName(context: Context, hostName: String) {
+        require(isValidNetworkHostName(hostName)) { "Invalid network host name" }
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putString(KEY_MODEL, model)
+            .putString(KEY_NETWORK_HOST_NAME, hostName.trim().lowercase(Locale.ROOT))
             .apply()
+    }
+
+    fun isValidIdentityText(value: String): Boolean =
+        value.trim().length <= MAX_IDENTITY_TEXT_LENGTH && value.none(Char::isISOControl)
+
+    fun isValidNetworkHostName(value: String): Boolean =
+        value.none(Char::isISOControl) && (value.isBlank() || HOST_NAME_PATTERN.matches(value.trim()))
+
+    private fun loadIdentityText(context: Context, key: String): String =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(key, null)
+            .orEmpty().trim().filterNot(Char::isISOControl).take(MAX_IDENTITY_TEXT_LENGTH)
+
+    private fun saveIdentityText(context: Context, key: String, value: String) {
+        require(isValidIdentityText(value)) { "Identity text must have at most 64 characters and no control characters" }
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(key, value.trim()).apply()
     }
 
     fun loadOemLabel(context: Context): String =

@@ -2,6 +2,12 @@
 <resources>
     <string name="feature_vehicle_name">Vehicle name</string>
     <string name="feature_return_name">Return-to-car name</string>
+    <string name="feature_accessory_serial_number">Accessory serial number</string>
+    <string name="feature_network_host_name">Network host name</string>
+    <string name="feature_identity_generated">Automatically generated</string>
+    <string name="feature_identity_note">Manufacturer and model are advertised to iPhone independently of the vehicle name. The host name is used for wireless network discovery. Leave serial number and host name empty for automatic values. Disconnect and reconnect CarPlay after saving.</string>
+    <string name="feature_identity_text_error">Use at most 64 characters, without line breaks or control characters.</string>
+    <string name="feature_identity_host_error">Use 1–63 letters, digits or hyphens, starting and ending with a letter or digit. Leave empty for automatic.</string>
     <string name="feature_sync_return">Use vehicle name for the return button</string>
     <string name="feature_reconnect_note">Applies on the next CarPlay connection.</string>
     <string name="feature_mfi_local">Local offline</string>

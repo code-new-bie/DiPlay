@@ -5,6 +5,36 @@ import org.junit.Test
 import java.nio.file.Files
 
 class DiagnosticRedactorTest {
+    @Test fun accessoryIdentitySurvivesWritingAndRepeatedExportRedaction() {
+        val folder = Files.createTempDirectory("diplay-identity-report").toFile()
+        val lines = listOf(
+            "CarPlay identity iap2Name=宋 Plus airPlayName=宋 Plus returnName=返回车机",
+            "iap2 identification sent name=宋 Plus model=Song Plus DM-i manufacturer=BYD Auto",
+            "iAP tunnel iap2 identification sent name=宋 Plus model=Song Plus DM-i manufacturer=BYD Auto",
+            "wired iap2 identification sent name=宋 Plus model=Song Plus DM-i manufacturer=BYD Auto",
+            "airplay /info identity name=宋 Plus model=Song Plus DM-i manufacturer=BYD Auto returnName=返回车机",
+        ).map { "10:50:10.530  $it" }
+        try {
+            SessionLogFile(folder.resolve("diplay.log")).use { log ->
+                log.reset("started")
+                lines.forEach(log::append)
+            }
+            val report = folder.resolve("diplay.log").readLines().mapNotNull(DiagnosticRedactor::redact)
+            for (line in lines) assertTrue(line, report.contains(line))
+        } finally { folder.deleteRecursively() }
+    }
+
+    @Test fun accessoryNameExceptionDoesNotAllowPhoneNamesOrCredentials() {
+        for (line in listOf(
+            "wireless phoneName=Jane’s iPhone",
+            "airplay SETUP name=Jane’s iPhone",
+            "10:50:10.530  unrelated CarPlay identity iap2Name=Jane airPlayName=Jane returnName=Jane",
+            "iap2 identification sent name=Song model=Plus manufacturer=BYD password=secret",
+            "airplay /info identity name=Song model=Plus manufacturer=BYD returnName=Song token=secret",
+            "CarPlay identity iap2Name=Song airPlayName=Song returnName=Song certificate=secret",
+        )) assertNull(line, DiagnosticRedactor.redact(line))
+    }
+
     @Test fun savedDriveReportKeepsMediaPerformanceCounters() {
         val folder = Files.createTempDirectory("diplay-media-report").toFile()
         try {

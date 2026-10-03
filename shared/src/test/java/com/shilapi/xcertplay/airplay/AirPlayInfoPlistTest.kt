@@ -8,6 +8,25 @@ import org.junit.Test
 
 class AirPlayInfoPlistTest {
     @Test
+    fun customVehicleNameSurvivesInfoEncodingWithTheDefaultModel() {
+        val config = AirPlayConfig(
+            deviceName = "宋 PLUS DMi",
+            deviceId = "02:00:00:00:00:02",
+            btMac = "02:00:00:00:00:02",
+            sourceVersion = "950.7.1",
+            main = AirPlayDisplayConfig(widthPixels = 1920, heightPixels = 1080),
+            model = "DiPlay",
+            manufacturer = "DiPlay",
+            oemLabel = "返回车机",
+            icons = listOf(AirPlayIcon(1, 1, byteArrayOf(1))),
+        )
+        val info = BplistCodec.decode(BplistCodec.encode(AirPlayInfoPlist.build(config))) as Map<*, *>
+        assertEquals("宋 PLUS DMi", info["name"])
+        assertEquals("DiPlay", info["model"])
+        assertEquals("返回车机", info["oemIconLabel"])
+    }
+
+    @Test
     fun defaultDisplayIncludesFullViewAndSafeAreas() {
         val info = AirPlayInfoPlist.build(
             AirPlayConfig(

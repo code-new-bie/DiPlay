@@ -314,9 +314,18 @@ class CarPlayController(
         }
     }
 
+    /** The immutable target selected for this controller, independent of subsequently saved settings. */
+    val authenticationTarget: MfiTarget get() = config.mfiTarget
+
     fun isClosed(): Boolean = closed
 
     fun hasActiveAirPlaySession(): Boolean = !closed && activeSession != null
+
+    /** Sends through the current session, including one adopted from the background service. */
+    fun setNightMode(night: Boolean): Boolean {
+        if (closed) return false
+        return activeSession?.setNightMode(night) ?: false
+    }
 
     fun hasActiveAirPlayAttachment(): Boolean = synchronized(lifecycleLock) {
         !closed && vpnService?.isAttached() == true
@@ -455,10 +464,6 @@ class CarPlayController(
         phase = Phase.MFI
         onStatus(CarPlayStatus.DiscoveringMfi)
         val offlineDirectory = java.io.File(appContext.noBackupFilesDir, LocalMfiAuthenticationClient.DIRECTORY)
-        if (offlineDirectory.exists()) {
-            openLocalMfi(offlineDirectory)
-            return
-        }
         when (config.mfiTarget) {
             MfiTarget.LOCAL -> openLocalMfi(offlineDirectory)
             MfiTarget.USB_CH341 -> {
@@ -921,6 +926,7 @@ class CarPlayController(
                 // The car hotspot previously used system NSD, which could resolve another interface
                 // or IPv6 while the listener/probe was bound to the AP's IPv4 address.
                 useInterfaceMdns = true,
+                hostName = config.hostName,
                 onEvent = { event -> debugLog("wireless bonjour: ${event.diagnosticSummary()}") },
             )
             bonjour = bonjourClient

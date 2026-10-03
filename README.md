@@ -18,7 +18,7 @@ Install on the **car**, not the iPhone. No jailbreak, dongle, Mac, account or au
 - Local diagnostic export. Reports are sent only if you choose to share them.
 - Separate installation alongside DiAuto. Run one projection app at a time.
 
-This is **not an Apple-certified product**. The APK bundles an experimental accessory identity recovered from public Carlinkit firmware, not a newly provisioned MFi identity for DiPlay. A bundled private key is extractable. Acceptance after future iOS updates, reliability across head units and suitability of that identity for general distribution are unresolved. This release invites community testing; it is not a guarantee of universal compatibility.
+This is **not an Apple-certified product**. Release APKs do not bundle an offline accessory identity and require a USB/CH341, I2C or remote authentication provider. Local debug builds can explicitly include the experimental accessory identity recovered from public Carlinkit firmware. A bundled private key is extractable. Acceptance after future iOS updates and reliability across head units remain unresolved; compatibility must be tested with the selected authentication provider.
 
 The release changes were tested on the development DiLink5.1 car: live windshield guidance and street names work, Car hotspot now starts CarPlay, and Wi-Fi Direct performance is substantially improved. Occasional audio cutouts remain and are deferred to a later update. Broader head-unit and iOS compatibility is not guaranteed. The HUD firmware scope and cleanup limits are documented in [BYD navigation](docs/BYD_NAVIGATION.md).
 
@@ -42,4 +42,4 @@ This repository starts with a clean public source snapshot. Local research, test
 
 ## Local release packaging
 
-The release APK intentionally contains the experimental accessory identity. The Git repository and source archive exclude all accessory and Android signing keys; tests generate synthetic identities at runtime. Source/CI builds omit runtime identity assets by default. Local release builds explicitly select an external asset directory. Publishing the APK makes its bundled identity extractable; building locally does not preserve that identity's confidentiality.
+Release APKs exclude offline authentication assets even when `DIPLAY_AUTH_ASSETS_DIR` is set. That directory is used only by the debug source set. The Git repository and source archive exclude all accessory and Android signing keys; tests generate synthetic identities at runtime. For debug builds, explicitly set `DIPLAY_AUTH_ASSETS_DIR` to a directory containing `offline-mfi/identity.pk8` and `offline-mfi/certificate.p7b`. The local workspace's `build-diplay.ps1` selects `auth-assets` for debug and clears the input for release. The local offline option appears only when both required assets are bundled. Fresh installs default to LOCAL when assets are available, otherwise USB/CH341; an unavailable saved LOCAL selection migrates to USB/CH341.

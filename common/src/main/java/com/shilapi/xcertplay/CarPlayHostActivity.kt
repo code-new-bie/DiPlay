@@ -137,7 +137,9 @@ class CarPlayHostActivity : ComponentActivity() {
             name = vehicleName,
             modelIdentifier = normalizedModel(),
             manufacturer = normalizedManufacturer(),
-            serialNumber = "DIPLAY-" + DiPlayBootstrap.deviceId(airPlayIdentity).replace(":", ""),
+            serialNumber = accessorySerialNumber.ifBlank {
+                "DIPLAY-" + DiPlayBootstrap.deviceId(airPlayIdentity).replace(":", "")
+            },
             firmwareVersion = "0.1.0",
             hardwareVersion = "1.0",
             carPlayUsbInterfaceNumber = 3,
@@ -147,7 +149,7 @@ class CarPlayHostActivity : ComponentActivity() {
             chargingConnectors = if (BydVehicleSettings.dcChargingEnabled(this)) EvChargingConnectors.GB_T else EvChargingConnectors.GB_T_AC_ONLY,
         ),
         label = vehicleName,
-        hostName = "diplay-" + DiPlayBootstrap.deviceId(airPlayIdentity).replace(":", "").lowercase(),
+        hostName = networkHostName.takeIf { it.isNotBlank() },
         hostMac = DiPlayBootstrap.deviceId(airPlayIdentity).split(":").map { it.toInt(16).toByte() }.toByteArray(),
         wirelessBluetoothDeviceAddress = DiPlayPreferences.phoneAddress(this),
         transport = if (wirelessEnabled) CarPlayTransport.WIRELESS else CarPlayTransport.WIRED,
@@ -301,6 +303,8 @@ class CarPlayHostActivity : ComponentActivity() {
     private var autoStartOnBoot = false
     private var manufacturer = AirPlayPersistence.DEFAULT_MANUFACTURER
     private var model = AirPlayPersistence.DEFAULT_MODEL
+    private var accessorySerialNumber = ""
+    private var networkHostName = ""
     private var oemLabel = AirPlayPersistence.DEFAULT_OEM_LABEL
     private var fps = AirPlayDisplaySettings.DEFAULT_FPS
     private var widthPhysicalMm = AirPlayDisplaySettings.DEFAULT_WIDTH_PHYSICAL_MM
@@ -337,7 +341,7 @@ class CarPlayHostActivity : ComponentActivity() {
     private var latestStage = "Preparing CarPlay"
     private var darkMode = false
     private var appearanceMonitor: CarPlayAppearanceMonitor? = null
-    private var activeAirPlaySession: AirPlaySession? = null
+    @Volatile private var appearanceUpdatesAllowed = true
     private var carPlayPageVisible = false
     private val bydCallUiSuppressor by lazy { BydCallUiSuppressor(applicationContext) }
     private val activeScreenStreamTypes = mutableSetOf<Int>()
@@ -352,6 +356,7 @@ class CarPlayHostActivity : ComponentActivity() {
     private var gestureStartY = 0f
     private val shuttingDown = AtomicBoolean(false)
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val appearanceSync = CarPlayAppearanceSync(mainHandler, ::syncAirPlayDarkMode)
     private val teardownExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val airPlayCommandExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val logLines = ArrayDeque<LogEntry>()
@@ -407,7 +412,7 @@ class CarPlayHostActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (intent.action == "android.hardware.usb.action.USB_DEVICE_ATTACHED") {
+        if (CarPlayUsbAttach.isIphone(intent)) {
             AirPlayPersistence.saveWirelessEnabled(this, false)
         }
         if (runCatching { DiPlayBootstrap.ensure(this) }.isFailure) {
@@ -416,8 +421,10 @@ class CarPlayHostActivity : ComponentActivity() {
         }
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         initializeSessionLog()
-        darkMode = isDarkMode(resources.configuration.uiMode)
-        appearanceMonitor = CarPlayAppearanceMonitor(this, mainHandler, resources.configuration.uiMode) { night ->
+        darkMode = isDarkMode(applicationContext.resources.configuration.uiMode)
+        appearanceMonitor = CarPlayAppearanceMonitor(
+            this, mainHandler, applicationContext.resources.configuration.uiMode, diagnostic = ::appendLog,
+        ) { night ->
             if (night != darkMode) {
                 darkMode = night
                 appendLog("CarPlay appearance changed to ${if (night) "dark" else "light"}")
@@ -485,6 +492,8 @@ class CarPlayHostActivity : ComponentActivity() {
         autoStartOnBoot = AirPlayPersistence.loadAutoStartOnBoot(this)
         manufacturer = AirPlayPersistence.loadManufacturer(this)
         model = AirPlayPersistence.loadModel(this)
+        accessorySerialNumber = AirPlayPersistence.loadAccessorySerialNumber(this)
+        networkHostName = AirPlayPersistence.loadNetworkHostName(this)
         oemLabel = AirPlayPersistence.loadOemLabel(this)
         fps = AirPlayPersistence.loadFps(this)
         widthPhysicalMm = AirPlayPersistence.loadWidthPhysicalMm(this)
@@ -511,6 +520,25 @@ class CarPlayHostActivity : ComponentActivity() {
         manualHotspotChannel = AirPlayPersistence.loadManualHotspotChannel(this)
         manualHotspotSecurity = AirPlayPersistence.loadManualHotspotSecurity(this)
         wirelessPermissionsReady = !wirelessEnabled || hasRequiredWirelessPermissions()
+    }
+
+    private fun refreshVehicleIdentitySettings() {
+        vehicleName = AirPlayPersistence.loadVehicleName(this)
+        manufacturer = AirPlayPersistence.loadManufacturer(this)
+        model = AirPlayPersistence.loadModel(this)
+        accessorySerialNumber = AirPlayPersistence.loadAccessorySerialNumber(this)
+        networkHostName = AirPlayPersistence.loadNetworkHostName(this)
+        syncReturnName = AirPlayPersistence.loadSyncReturnName(this)
+        oemLabel = AirPlayPersistence.loadOemLabel(this)
+    }
+
+    /** Re-read the authentication target; main-page changes must reach a reused connection page. */
+    private fun refreshMfiTargetSettings() {
+        mfiTarget = AirPlayPersistence.loadMfiTarget(this)
+        mfiI2cPath = AirPlayPersistence.loadMfiI2cPath(this)
+        remoteMfiServer = AirPlayPersistence.loadRemoteMfiServer(this)
+        remoteMfiToken = AirPlayPersistence.loadRemoteMfiToken(this)
+        syncMfiSettingsControls()
     }
 
     private fun requestStartupPrerequisites() {
@@ -589,7 +617,7 @@ class CarPlayHostActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (intent.action == "android.hardware.usb.action.USB_DEVICE_ATTACHED" && wirelessEnabled) {
+        if (CarPlayUsbAttach.isIphone(intent) && wirelessEnabled) {
             shutdown(false, "switching to USB") {
                 AirPlayPersistence.saveWirelessEnabled(this, false)
                 startActivity(Intent(this, CarPlayHostActivity::class.java))
@@ -611,8 +639,14 @@ class CarPlayHostActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        appearanceMonitor?.updateUiMode(resources.configuration.uiMode)
-        if (!menuOpen) muteLocalMediaPlayback = AirPlayPersistence.loadMuteLocalMediaPlayback(this)
+        appearanceMonitor?.updateUiMode(applicationContext.resources.configuration.uiMode)
+        if (!menuOpen) {
+            muteLocalMediaPlayback = AirPlayPersistence.loadMuteLocalMediaPlayback(this)
+            refreshVehicleIdentitySettings()
+            // The main page can change the authentication target while this page is kept alive, and
+            // a reused Activity would otherwise keep connecting with the target it read at startup.
+            refreshMfiTargetSettings()
+        }
         locationPermissionAvailable = hasFineLocationPermission()
         if (locationReportingEnabled && !locationPermissionAvailable && !menuOpen) {
             requestLocationPermission()
@@ -661,9 +695,12 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        appearanceUpdatesAllowed = false
+        airPlayCommandExecutor.shutdown()
         bydCallUiSuppressor.close()
         channelPreview.close()
         appearanceMonitor?.stop()
+        appearanceSync.stop()
         mainHandler.removeCallbacks(applyDisplaySize)
         mainHandler.removeCallbacks(expireOldLogLines)
         currentSurface?.let { surface ->
@@ -1397,6 +1434,8 @@ class CarPlayHostActivity : ComponentActivity() {
         AirPlayPersistence.saveHevcSoftwareDecoderEnabled(this, hevcSoftwareDecoderEnabled)
         AirPlayPersistence.saveManufacturer(this, manufacturer)
         AirPlayPersistence.saveModel(this, model)
+        AirPlayPersistence.saveAccessorySerialNumber(this, accessorySerialNumber)
+        AirPlayPersistence.saveNetworkHostName(this, networkHostName)
         AirPlayPersistence.saveOemLabel(this, oemLabel)
         AirPlayPersistence.saveDebugLogsEnabled(this, debugLogsEnabled)
         AirPlayPersistence.saveRightHandDrive(this, rightHandDrive)
@@ -1474,12 +1513,12 @@ class CarPlayHostActivity : ComponentActivity() {
         }
         val targetChoice = settingsChoiceRow(
             label = getString(R.string.host_mfi_target_label),
-            options = listOf(
-                MfiTarget.LOCAL to getString(R.string.feature_mfi_local),
-                MfiTarget.USB_CH341 to getString(R.string.host_mfi_usb),
-                MfiTarget.I2C to getString(R.string.host_mfi_i2c),
-                MfiTarget.REMOTE to getString(R.string.host_mfi_remote),
-            ),
+            options = MfiTargetAvailability.availableTargets(this).map { target -> target to getString(when (target) {
+                MfiTarget.LOCAL -> R.string.feature_mfi_local
+                MfiTarget.USB_CH341 -> R.string.host_mfi_usb
+                MfiTarget.I2C -> R.string.host_mfi_i2c
+                MfiTarget.REMOTE -> R.string.host_mfi_remote
+            }) },
             selected = mfiTarget,
         ) { target ->
             if (mfiTarget == target) return@settingsChoiceRow
@@ -1700,6 +1739,15 @@ class CarPlayHostActivity : ComponentActivity() {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             ).apply { topMargin = dp(10) },
         )
+        section.addView(settingsInputRow(getString(R.string.feature_accessory_serial_number), accessorySerialNumber,
+            onInputCreated = { it.hint = getString(R.string.feature_identity_generated) }) {
+            accessorySerialNumber = it
+        })
+        section.addView(settingsInputRow(getString(R.string.feature_network_host_name), networkHostName,
+            onInputCreated = { it.hint = getString(R.string.feature_identity_generated) }) {
+            networkHostName = it
+        })
+        section.addView(menuText(getString(R.string.feature_identity_note), 14f, MENU_SECONDARY))
         section.addView(
             settingsInputRow(getString(R.string.host_oem_label), oemLabel) { value ->
                 oemLabel = value
@@ -3022,11 +3070,10 @@ class CarPlayHostActivity : ComponentActivity() {
                     if (controllerGeneration != restartGeneration) {
                         return@runOnUiThread
                     }
-                    activeAirPlaySession = session
                     updateBydCallUi()
                     CarPlayBackgroundSession.active = true
                     reconnectAttempts = 0
-                    syncAirPlayDarkMode()
+                    if (appearanceUpdatesAllowed) appearanceSync.start(session)
                     if (menuOpen) return@runOnUiThread
                     appendLog("AirPlay session active")
                 }
@@ -3034,7 +3081,8 @@ class CarPlayHostActivity : ComponentActivity() {
 
             override fun onSessionEnded(session: AirPlaySession) {
                 runOnUiThread {
-                    if (activeAirPlaySession === session) activeAirPlaySession = null
+                    appearanceSync.end(session)
+                    if (controller?.hasActiveAirPlaySession() != true) appearanceSync.stop()
                     updateBydCallUi()
                     CarPlayBackgroundSession.active = false
                     if (menuOpen || controllerGeneration != restartGeneration) {
@@ -3121,6 +3169,7 @@ class CarPlayHostActivity : ComponentActivity() {
             createSessionListener(generation),
             createStatusReporter(generation),
         )
+        if (snapshot.controller.hasActiveAirPlaySession()) appearanceSync.start(snapshot.controller)
         snapshot.sink.setScreenStreamActiveChangedListener { type, active ->
             onScreenStreamStateChanged(restartGeneration, type, active)
         }
@@ -3147,9 +3196,23 @@ class CarPlayHostActivity : ComponentActivity() {
     private fun startCarPlay(size: DisplaySize) {
         if (CarPlayBackgroundSession.hasSession() && !CarPlayBackgroundSession.isOwner(this)) return
         if (shuttingDown.get() || menuOpen || handshakeResetInProgress || controller != null) return
+        refreshVehicleIdentitySettings()
+        // Read the target again here: it decides the authentication provider for this session.
+        refreshMfiTargetSettings()
+        try {
+            DiPlayBootstrap.ensure(this, mfiTarget)
+        } catch (error: Exception) {
+            appendLog("MFi preparation failed for ${mfiTargetLabel(mfiTarget)}: ${error.javaClass.simpleName}")
+            setConnectionStage(getString(R.string.home_setup_error))
+            return
+        }
         val controllerGeneration = restartGeneration
         val config = createRuntimeConfig()
         val airPlayConfig = createAirPlayConfig(size)
+        appendLog(
+            "CarPlay identity iap2Name=${config.identification.name} " +
+                "airPlayName=${airPlayConfig.deviceName} returnName=${airPlayConfig.oemLabel}",
+        )
         val locationProvider: Iap2LocationProvider? =
             if (config.locationReportingEnabled) {
                 val position = AndroidCarPlayLocationProvider(this)
@@ -3231,18 +3294,28 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     private fun syncAirPlayDarkMode() {
-        val session = activeAirPlaySession ?: return
+        if (!appearanceUpdatesAllowed || shuttingDown.get()) return
+        val target = controller ?: return
         val night = darkMode
-        airPlayCommandExecutor.execute {
-            try {
-                val sent = session.setNightMode(night)
-                Log.i(
-                    TAG,
-                    "AirPlay dark mode=${if (night) "dark" else "light"} eventChannelReady=$sent",
-                )
-            } catch (error: Throwable) {
-                Log.w(TAG, "Could not send AirPlay dark mode update", error)
+        val diagnosticLog = sessionLog
+        try {
+            airPlayCommandExecutor.execute {
+                if (target.isClosed() || shuttingDown.get() || !appearanceUpdatesAllowed) return@execute
+                try {
+                    val sent = target.setNightMode(night)
+                    val message = "CarPlay appearance requested=${if (night) "dark" else "light"} " +
+                        "connected=${target.hasActiveAirPlaySession()} eventChannelReady=$sent"
+                    Log.i(TAG, message)
+                    diagnosticLog?.append(formattedLogLine(message, System.currentTimeMillis()))
+                } catch (error: Exception) {
+                    Log.w(TAG, "Could not send AirPlay dark mode update", error)
+                    diagnosticLog?.append(formattedLogLine(
+                        "CarPlay appearance send failed: ${error.javaClass.simpleName}", System.currentTimeMillis(),
+                    ))
+                }
             }
+        } catch (_: java.util.concurrent.RejectedExecutionException) {
+            // A stopped Activity no longer owns the command executor.
         }
     }
 
@@ -3393,6 +3466,7 @@ class CarPlayHostActivity : ComponentActivity() {
         setConnectionStage(reason)
         Log.i(TAG, "$reason; rebuilding stack at ${size.width}x${size.height}")
         val generation = ++restartGeneration
+        appearanceSync.stop()
         handshakeResetInProgress = true
         val oldController = controller
         val oldSink = sink
@@ -3424,6 +3498,17 @@ class CarPlayHostActivity : ComponentActivity() {
 
     private fun saveSettingsAndReconnect() {
         if (!menuOpen) return
+        val identityError = when {
+            !listOf(manufacturer, model, accessorySerialNumber).all(AirPlayPersistence::isValidIdentityText) ->
+                getString(R.string.feature_identity_text_error)
+            !AirPlayPersistence.isValidNetworkHostName(networkHostName) ->
+                getString(R.string.feature_identity_host_error)
+            else -> null
+        }
+        if (identityError != null) {
+            Toast.makeText(this, identityError, Toast.LENGTH_LONG).show()
+            return
+        }
         if (!validateMfiSettings()) return
         if (!validateManualHotspotSettings()) return
         persistMenuSettings()
@@ -3468,6 +3553,7 @@ class CarPlayHostActivity : ComponentActivity() {
     private fun shutdown(terminateProcess: Boolean, reason: String, completion: () -> Unit = {}) {
         if (!shuttingDown.compareAndSet(false, true)) { completion(); return }
         restartGeneration += 1
+        appearanceSync.stop()
         mainHandler.removeCallbacks(applyDisplaySize)
         val oldController = controller
         val oldSink = sink
