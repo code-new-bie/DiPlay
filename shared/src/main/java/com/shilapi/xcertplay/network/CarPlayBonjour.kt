@@ -124,6 +124,7 @@ class CarPlayBonjour(
     private val identity: AirPlayIdentity,
     private val advertisedHost: String? = null,
     private val useInterfaceMdns: Boolean = false,
+    private val hostName: String? = null,
     private val onEvent: (CarPlayBonjourEvent) -> Unit = {},
 ) : Closeable {
     private val nsdManager = (context.applicationContext ?: context)
@@ -240,7 +241,7 @@ class CarPlayBonjour(
                     val address = requireNotNull(localAdvertisedAddress) {
                         "Interface mDNS requires a local advertised address"
                     }
-                    val dns = JmDNS.create(address, "carplay-${config.deviceId.replace(":", "")}")
+                    val dns = JmDNS.create(address, hostName ?: "carplay-${config.deviceId.replace(":", "")}")
                     interfaceMdns = dns
                     dns.addServiceListener("$CARPLAY_CONTROL_SERVICE_TYPE.local.", interfaceListener)
                     dns.registerService(ServiceInfo.create(

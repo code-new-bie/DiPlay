@@ -7,6 +7,7 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
+import com.shilapi.xcertplay.orchestration.MfiTarget
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -43,6 +44,29 @@ class DiagnosticExportStoreTest {
         assertEquals(0, provider.publishValues!!.getAsInteger(MediaStore.Downloads.IS_PENDING))
         assertEquals(report, provider.contentAtPublish)
         assertFalse(provider.deleted)
+    }
+
+    @Test fun android10ExportsUsbAuthenticationAndAccessoryNamesWithoutCredentials() {
+        val logFile = File(RuntimeEnvironment.getApplication().cacheDir, "identity-session.log")
+        val identity = "10:50:10.530  iAP tunnel iap2 identification sent " +
+            "name=宋 Plus model=Song Plus DM-i manufacturer=BYD"
+        try {
+            SessionLogFile(logFile).use { log ->
+                log.reset("started")
+                log.append(identity)
+                log.append("wireless phoneName=Jane’s iPhone")
+                log.append("token=secret")
+            }
+            val report = DiagnosticAuthenticationSummary.report(MfiTarget.USB_CH341, MfiTarget.USB_CH341) +
+                "\n" + logFile.readLines().mapNotNull(DiagnosticRedactor::redact).joinToString("\n")
+            DiagnosticExportStore.saveToDownloads(resolver, "DiPlay-identity-test.txt", report)
+            val exported = provider.file.readText()
+            assertTrue(exported.contains("Session authentication target: USB/CH341"))
+            assertTrue(exported.contains(identity))
+            assertFalse(exported.contains("no remote fallback"))
+            assertFalse(exported.contains("Jane"))
+            assertFalse(exported.contains("secret"))
+        } finally { logFile.delete() }
     }
 
     @Test fun unavailableDownloadsDoesNotReturnFalseSuccess() {

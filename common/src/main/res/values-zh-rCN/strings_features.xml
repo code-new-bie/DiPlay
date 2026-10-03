@@ -2,6 +2,12 @@
 <resources>
     <string name="feature_vehicle_name">车载名称</string>
     <string name="feature_return_name">返回车机名称</string>
+    <string name="feature_accessory_serial_number">附件序列号</string>
+    <string name="feature_network_host_name">网络主机名</string>
+    <string name="feature_identity_generated">自动生成</string>
+    <string name="feature_identity_note">厂商和型号会独立于车载名称上报给 iPhone，主机名用于无线连接的网络广播。序列号和主机名留空时自动生成。保存后请断开并重新连接 CarPlay。</string>
+    <string name="feature_identity_text_error">最多输入 64 个字符，请勿使用换行或控制字符。</string>
+    <string name="feature_identity_host_error">请输入 1–63 个英文字母、数字或连字符，首尾必须为字母或数字；留空时自动生成。</string>
     <string name="feature_sync_return">返回名称跟随车载名称</string>
     <string name="feature_reconnect_note">下次连接 CarPlay 时生效。</string>
     <string name="feature_mfi_local">本地离线</string>

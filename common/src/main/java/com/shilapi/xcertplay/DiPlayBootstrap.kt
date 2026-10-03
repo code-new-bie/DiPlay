@@ -7,11 +7,13 @@ import com.shilapi.xcertplay.orchestration.MfiTarget
 import java.io.File
 import java.security.MessageDigest
 
-/** Installs the private beta's experimental identity. It has no remote fallback. */
+/** Prepares the explicitly selected local provider without changing the saved MFi target. */
 internal object DiPlayBootstrap {
     @Volatile private var ready = false
 
-    @Synchronized fun ensure(context: Context) {
+    @Synchronized fun ensure(context: Context, mfiTarget: MfiTarget = AirPlayPersistence.loadMfiTarget(context)) {
+        if (mfiTarget != MfiTarget.LOCAL) return
+        check(MfiTargetAvailability.hasLocalAssets(context)) { "Local authentication assets are not included in this APK" }
         if (ready) return
         val target = File(context.noBackupFilesDir, LocalMfiAuthenticationClient.DIRECTORY)
         if (!target.exists()) {
@@ -36,7 +38,6 @@ internal object DiPlayBootstrap {
             }
         }
         LocalMfiAuthenticationClient.load(target)
-        AirPlayPersistence.saveMfiTarget(context, MfiTarget.LOCAL)
         AirPlayPersistence.saveDebugLogsEnabled(context, false)
         ready = true
     }

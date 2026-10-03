@@ -96,6 +96,10 @@ class DiPlayActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent); setIntent(intent)
+        // Reused home pages must apply the same auto-connect preference as a fresh launch.
+        if (intent.action == android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED) {
+            initialLaunch = true
+        }
         page = intent.getStringExtra("page") ?: "home"; render()
         handleWirelessRecovery()
     }
@@ -237,11 +241,30 @@ class DiPlayActivity : ComponentActivity() {
                     }
                 }, matchButton(0, 60))
             }
+            vehicleIdentityControl(card, R.string.host_manufacturer, AirPlayPersistence.loadManufacturer(this)) {
+                AirPlayPersistence.saveManufacturer(this, it)
+            }
+            vehicleIdentityControl(card, R.string.host_model, AirPlayPersistence.loadModel(this)) {
+                AirPlayPersistence.saveModel(this, it)
+            }
+            vehicleIdentityControl(card, R.string.feature_accessory_serial_number,
+                AirPlayPersistence.loadAccessorySerialNumber(this)) {
+                AirPlayPersistence.saveAccessorySerialNumber(this, it)
+            }
+            vehicleIdentityControl(card, R.string.feature_network_host_name,
+                AirPlayPersistence.loadNetworkHostName(this), networkHost = true) {
+                AirPlayPersistence.saveNetworkHostName(this, it)
+            }
+            card.addView(label(getString(R.string.feature_identity_note), 14, MUTED))
         }
         section(content, getString(R.string.host_mfi_target_label)) { card ->
-            val targets = com.shilapi.xcertplay.orchestration.MfiTarget.entries
-            val labels = listOf(getString(R.string.feature_mfi_local), getString(R.string.host_mfi_usb),
-                getString(R.string.host_mfi_i2c), getString(R.string.host_mfi_remote))
+            val targets = MfiTargetAvailability.availableTargets(this)
+            val labels = targets.map { target -> getString(when (target) {
+                com.shilapi.xcertplay.orchestration.MfiTarget.LOCAL -> R.string.feature_mfi_local
+                com.shilapi.xcertplay.orchestration.MfiTarget.USB_CH341 -> R.string.host_mfi_usb
+                com.shilapi.xcertplay.orchestration.MfiTarget.I2C -> R.string.host_mfi_i2c
+                com.shilapi.xcertplay.orchestration.MfiTarget.REMOTE -> R.string.host_mfi_remote
+            }) }
             card.addView(button(getString(R.string.home_choice_summary, getString(R.string.host_mfi_target_label),
                 labels[targets.indexOf(AirPlayPersistence.loadMfiTarget(this))]), false) {
                 AlertDialog.Builder(this).setTitle(R.string.host_mfi_target_label)
@@ -631,7 +654,38 @@ class DiPlayActivity : ComponentActivity() {
         if (CarPlayBackgroundSession.hasSession()) connect(true)
     }
 
-    private fun textInput(title: String, current: String, secret: Boolean, save: (String) -> Unit) {
+    private fun vehicleIdentityControl(
+        parent: LinearLayout,
+        titleRes: Int,
+        current: String,
+        networkHost: Boolean = false,
+        save: (String) -> Unit,
+    ) {
+        val title = getString(titleRes)
+        val summary = current.ifBlank { getString(R.string.feature_identity_generated) }
+        parent.addView(button(getString(R.string.home_choice_summary, title, summary), false) {
+            textInput(title, current, secret = false, validationError = { value ->
+                when {
+                    networkHost && !AirPlayPersistence.isValidNetworkHostName(value) ->
+                        getString(R.string.feature_identity_host_error)
+                    !networkHost && !AirPlayPersistence.isValidIdentityText(value) ->
+                        getString(R.string.feature_identity_text_error)
+                    else -> null
+                }
+            }) {
+                save(it)
+                render()
+            }
+        }, matchButton(0, 60))
+    }
+
+    private fun textInput(
+        title: String,
+        current: String,
+        secret: Boolean,
+        validationError: ((String) -> String?)? = null,
+        save: (String) -> Unit,
+    ) {
         val input = EditText(this).apply {
             setText(current)
             setSingleLine()
@@ -641,9 +695,20 @@ class DiPlayActivity : ComponentActivity() {
                 android.text.InputType.TYPE_CLASS_TEXT
             }
         }
-        AlertDialog.Builder(this).setTitle(title).setView(input)
-            .setPositiveButton(getString(R.string.home_btn_save)) { _, _ -> save(input.text.toString().let { if (secret) it else it.trim() }) }
+        val dialog = AlertDialog.Builder(this).setTitle(title).setView(input)
+            .setPositiveButton(getString(R.string.home_btn_save), null)
             .setNegativeButton(getString(R.string.home_btn_cancel), null).show()
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val value = input.text.toString().let { if (secret) it else it.trim() }
+            val error = validationError?.invoke(value)
+            if (error != null) {
+                input.error = error
+                input.requestFocus()
+            } else {
+                save(value)
+                dialog.dismiss()
+            }
+        }
     }
 
     private fun carPlaySizeControl(parent: LinearLayout) {
@@ -812,7 +877,11 @@ class DiPlayActivity : ComponentActivity() {
                     appendLine("Android ${Build.VERSION.RELEASE} / API ${Build.VERSION.SDK_INT}")
                     appendLine("Head unit: ${Build.MANUFACTURER} ${Build.MODEL}")
                     appendLine("Connection: ${if (AirPlayPersistence.loadWirelessEnabled(appContext)) "wireless" else "USB"}")
-                    appendLine("Authentication: local experimental beta identity; no remote fallback")
+                    val sessionController = CarPlayBackgroundSession.snapshot()?.controller
+                        ?.takeUnless { it.isClosed() }
+                    appendLine(DiagnosticAuthenticationSummary.report(
+                        AirPlayPersistence.loadMfiTarget(appContext), sessionController?.authenticationTarget,
+                    ))
                     appendLine("Saved video preference (may differ from active session): ${if (AirPlayPersistence.loadHevcEnabled(appContext)) "HEVC" else "H.264"}; ${AirPlayPersistence.loadFps(appContext)} fps")
                     appendLine("CarPlay size: ${com.shilapi.xcertplay.airplay.CarPlaySize.fromWidthMillimeters(AirPlayPersistence.loadWidthPhysicalMm(appContext)).label}")
                     appendLine("Saved resolution preference (may differ from active session): ${AirPlayPersistence.loadDisplayScaleTenths(appContext) * 10}%")

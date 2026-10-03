@@ -356,6 +356,10 @@ class AirPlaySession(
             }
             path.endsWith("/info") -> {
                 val info = AirPlayInfoPlist.build(config)
+                debugLog(
+                    "airplay /info identity name=${info["name"]} model=${info["model"]} " +
+                        "manufacturer=${info["manufacturer"]} returnName=${info["oemIconLabel"]}",
+                )
                 if (request.body.isNotEmpty()) {
                     val requestInfo = try {
                         BplistCodec.decode(request.body).toString()
@@ -663,7 +667,13 @@ class AirPlaySession(
                 val parsed = RtspMessage.parseMessages(plaintext)
                 plaintext = parsed.rest
                 for (message in parsed.messages) {
-                    if (message.method.startsWith("RTSP/") || message.method.startsWith("HTTP/")) continue
+                    if (message.method.startsWith("RTSP/") || message.method.startsWith("HTTP/")) {
+                        debugLog(
+                            "airplay event response ${message.method} ${message.path} " +
+                                "cseq=${message.headers["cseq"] ?: "-"} body=${message.body.size}",
+                        )
+                        continue
+                    }
                     debugLog(
                         "airplay event rx ${message.method} ${message.path} cseq=${message.headers["cseq"] ?: "-"} body=${message.body.size}",
                     )

@@ -53,7 +53,8 @@ class CarPlayRuntimeConfig(
     val identification: Iap2IdentificationConfig,
     val availableCurrentMilliAmps: Int = 2400,
     val label: String = "xcertplay",
-    val hostName: String = "xcertplay",
+    /** Optional DNS host label for wireless Bonjour; null preserves automatic generation. */
+    val hostName: String? = null,
     val transport: CarPlayTransport = CarPlayTransport.WIRED,
     val wirelessHotspotMode: WirelessHotspotMode = WirelessHotspotMode.WIFI_P2P,
     val wifiDirectChannel: Int = 0,
@@ -75,7 +76,7 @@ class CarPlayRuntimeConfig(
             "availableCurrentMilliAmps must be in 0..65535"
         }
         require(label.isNotBlank()) { "label must not be blank" }
-        require(hostName.isNotBlank()) { "hostName must not be blank" }
+        require(hostName == null || hostName.isNotBlank()) { "hostName must not be blank" }
         require(mfiTarget != MfiTarget.USB_CH341 || ch341Devices.isNotEmpty()) {
             "CH341 devices must be configured for the USB/CH341 MFi target"
         }

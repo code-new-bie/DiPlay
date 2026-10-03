@@ -128,7 +128,11 @@ sealed class Iap2IdentificationException(message: String) : IOException(message)
 class Iap2IdentificationClient(private val session: Iap2Session) {
     /** Waits for link negotiation, then completes the 1D00/1D01/1D02 exchange. */
     @Throws(IphoneUsbException::class, Iap2IdentificationException::class)
-    fun identify(config: Iap2IdentificationConfig, timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS) {
+    fun identify(
+        config: Iap2IdentificationConfig,
+        timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS,
+        onProgress: (String) -> Unit = {},
+    ) {
         require(timeoutMillis in 1..MAXIMUM_TIMEOUT_MILLIS) {
             "timeoutMillis must be in 1..$MAXIMUM_TIMEOUT_MILLIS"
         }
@@ -141,7 +145,13 @@ class Iap2IdentificationClient(private val session: Iap2Session) {
             val frame = session.recv(remainingMillis(deadlineNanos))
                 ?: throw IphoneUsbException.TimedOut("Timed out waiting for iAP2 identification")
             when (frame.messageId) {
-                START_IDENTIFICATION -> session.send(identificationInformation(config), remainingMillis(deadlineNanos))
+                START_IDENTIFICATION -> {
+                    session.send(identificationInformation(config), remainingMillis(deadlineNanos))
+                    onProgress(
+                        "iap2 identification sent name=${config.name} " +
+                            "model=${config.modelIdentifier} manufacturer=${config.manufacturer}",
+                    )
+                }
                 IDENTIFICATION_ACCEPTED -> return
                 IDENTIFICATION_REJECTED -> {
                     val rejected = Iap2BodyReader.of(frame).list().mapTo(LinkedHashSet()) { it.id }
