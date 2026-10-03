@@ -96,6 +96,10 @@ class DiPlayActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent); setIntent(intent)
+        // Reused home pages must apply the same auto-connect preference as a fresh launch.
+        if (intent.action == android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED) {
+            initialLaunch = true
+        }
         page = intent.getStringExtra("page") ?: "home"; render()
         handleWirelessRecovery()
     }

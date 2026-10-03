@@ -29,7 +29,12 @@
             android:resizeableActivity="true"
             android:screenOrientation="fullSensor"
             android:theme="@style/Theme.Xcertplay"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name="com.shilapi.xcertplay.UsbAuthenticationAttachActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
             </intent-filter>
